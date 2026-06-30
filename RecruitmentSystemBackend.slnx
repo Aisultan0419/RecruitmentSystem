@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RecruitmentSystemAPI/RecruitmentSystemAPI.csproj" />
+  <Project Path="RecruitmentSystemDomain/RecruitmentSystemDomain.csproj" />
+</Solution>
