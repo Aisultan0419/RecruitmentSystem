@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="RecruitmentSystemAPI/RecruitmentSystemAPI.csproj" />
+  <Project Path="RecruitmentSystemApplication/RecruitmentSystemApplication.csproj" Id="6e613292-21e8-48a8-9299-580f7aace8db" />
   <Project Path="RecruitmentSystemDomain/RecruitmentSystemDomain.csproj" />
+  <Project Path="RecruitmentSystemInfrastructure/RecruitmentSystemInfrastructure.csproj" Id="e13d25f1-5ce3-43cc-931e-b69aadf9b339" />
 </Solution>

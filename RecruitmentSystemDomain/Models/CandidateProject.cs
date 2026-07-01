@@ -10,5 +10,6 @@ namespace RecruitmentSystemDomain.Models
         public string? Description { get; set; }
         public List<Tag> Tags { get; set; } = [];
         public required UserProfile UserProfile { get; set; }
+        public Guid UserProfileId { get; set; }
     }
 }
