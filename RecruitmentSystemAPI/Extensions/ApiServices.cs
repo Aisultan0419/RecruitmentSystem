@@ -10,7 +10,7 @@ namespace RecruitmentSystemAPI.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddScoped<IRegistrationService, RegistrationService>();
-            services.AddSingleton<IBaseRepository, BaseRepository>();
+            services.AddScoped<IBaseRepository, BaseRepository>();
             services.AddScoped<IHashingService, HashingService>();
 
             return services;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace RecruitmentSystemInfrastructure
@@ -6,9 +7,9 @@ namespace RecruitmentSystemInfrastructure
     public static class AppDbContextConnection
     {
         public static IServiceCollection AddDbContextConnection(
-            this IServiceCollection services)
+            this IServiceCollection services, IConfiguration configuration)
         {
-            string connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ?? throw new NullReferenceException("DB connection string is not set");
+            string connectionString = configuration["ConnectionStrings:DefaultConnection"] ?? throw new NullReferenceException("DB connection string is not set");
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString)
             );
