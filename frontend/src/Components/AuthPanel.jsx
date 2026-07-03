@@ -1,14 +1,14 @@
 import { Input} from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
-import { API_BASE_URL } from "../config";
+import { VITE_API_URL } from "../config";
 import {useEffect, useRef, useState} from 'react';
-const AuthPanel = () => {//here should be also url for deploy
+const AuthPanel = () => {
     const [mode, setMode] = useState("register");
     const formRef = useRef();
 
     const handleCredentialsResponse = async (googleResponse) => {
         try{
-            const response = await fetch(`${API_BASE_URL}/api/user/auth-google?googleClientToken=${googleResponse.credential}`,{
+            const response = await fetch(`${VITE_API_URL}/api/user/auth-google?googleClientToken=${googleResponse.credential}`,{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -32,7 +32,7 @@ const AuthPanel = () => {//here should be also url for deploy
     const handleRegistration = async (e) => {
         e.preventDefault();
         try{
-            const response = await fetch(`${API_BASE_URL}/api/user/register`,{
+            const response = await fetch(`${VITE_API_URL}/api/user/register`,{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -59,7 +59,7 @@ const AuthPanel = () => {//here should be also url for deploy
         e.preventDefault();
 
         try{
-            const response = await fetch(`${API_BASE_URL}/api/user/login`,{
+            const response = await fetch(`${VITE_API_URL}/api/user/login`,{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
