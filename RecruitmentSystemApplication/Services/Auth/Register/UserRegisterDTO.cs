@@ -3,8 +3,8 @@
     public record UserRegisterDTO
     (
         string Email,
-        string plainPassword,
-        string FirstName,
+        string? plainPassword,
+        string? FirstName,
         string? LastName,
         string? Location
     );

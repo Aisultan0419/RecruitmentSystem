@@ -1,10 +1,10 @@
-﻿using RecruitmentSystemApplication.Common.ResultWrapper;
-using RecruitmentSystemApplication.Services.Auth.Register;
-
+﻿using RecruitmentSystemApplication.Services.Auth.Register;
+using FluentResults;
+using RecruitmentSystemDomain.Models;
 namespace RecruitmentSystemApplication.Contracts
 {
     public interface IRegistrationService
     {
-        Task<Result<string>> RegisterAsync(UserRegisterDTO userRegisterDTO);
+        Task<User> RegisterAsync(UserRegisterDTO userRegisterDTO);
     }
 }

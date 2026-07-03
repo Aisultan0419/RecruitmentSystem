@@ -1,4 +1,5 @@
-﻿using RecruitmentSystemApplication.Common.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using RecruitmentSystemApplication.Common.Interfaces;
 namespace RecruitmentSystemInfrastructure
 {
     public class BaseRepository(AppDbContext _context) : IBaseRepository
