@@ -9,6 +9,7 @@ builder.Services.AddServices();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerWithJwt();
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAmazonClient(builder.Configuration);
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
 builder.Services.AddCors(options =>
 {
@@ -19,7 +20,7 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod();
     });
 });
-var app = builder.Build();
+var app = builder.Build(); ///i need to do middleware for exceptions like 500, for optimistic locking
 
 
 app.UseSwagger();

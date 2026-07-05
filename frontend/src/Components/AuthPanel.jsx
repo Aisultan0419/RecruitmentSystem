@@ -5,7 +5,7 @@ import {useEffect, useRef, useState} from 'react';
 const AuthPanel = () => {
     const [mode, setMode] = useState("register");
     const formRef = useRef();
-
+    //i should make this page responsible later
     const handleCredentialsResponse = async (googleResponse) => {
         try{
             const response = await fetch(`${VITE_API_URL}/api/user/auth-google?googleClientToken=${googleResponse.credential}`,{

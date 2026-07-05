@@ -2,6 +2,7 @@
 using RecruitmentSystemApplication.Contracts;
 using RecruitmentSystemApplication.Services.Auth.Login;
 using RecruitmentSystemApplication.Services.Auth.Register;
+using RecruitmentSystemApplication.Services.Profile;
 using RecruitmentSystemInfrastructure;
 using RecruitmentSystemInfrastructure.Repositories;
 using RecruitmentSystemInfrastructure.Utils;
@@ -19,6 +20,8 @@ namespace RecruitmentSystemAPI.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddSingleton<IJwtService, JwtService>();
             services.AddScoped<ILoginService, LoginService>();
+            services.AddScoped<IUserProfileService, UserProfileService>();
+            services.AddScoped<IImageService, ImageService>();
             return services;
         }
     }

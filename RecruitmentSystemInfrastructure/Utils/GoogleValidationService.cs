@@ -7,7 +7,6 @@ namespace RecruitmentSystemInfrastructure.Utils
     {
         public async Task<GoogleUserPayload?> ValidateGoogleToken(string googleClientToken)
         {
-            //i should change it later client id is hardcoded
             const string GOOGLE_CLIENT_ID = "684390088485-7m1i4sbd91l80momqf8ekjcf78s0rvm2.apps.googleusercontent.com";
             var payload = await VerifyGoogleToken(googleClientToken, GOOGLE_CLIENT_ID);
 

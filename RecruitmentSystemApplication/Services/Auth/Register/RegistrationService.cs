@@ -12,7 +12,7 @@ namespace RecruitmentSystemApplication.Services.Auth.Register
     {
         public async Task<User> RegisterAsync(UserRegisterDTO userRegisterDTO)
         {
-            User user = new User()
+            User user = new()
             {
                 Id = Guid.NewGuid(),
                 Email = userRegisterDTO.Email,

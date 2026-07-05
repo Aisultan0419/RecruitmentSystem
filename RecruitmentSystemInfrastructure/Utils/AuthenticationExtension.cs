@@ -10,7 +10,6 @@ namespace RecruitmentSystemInfrastructure.Utils
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection service, IConfiguration configuration)
         {
             var secretKey = configuration["JWT_SECRET"];
-
             service.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
