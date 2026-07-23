@@ -194,7 +194,7 @@ const CandidatePanel = (id) => {
                             <DialogTitle className="font-medium text-base font-sans">{editingMode ? "Edit attribute" : "Fill new attribute"}</DialogTitle>
                         </DialogHeader>
 
-                        <div className="flex flex-col items-between gap-7">
+                        <div className="flex flex-col h-full justify-between gap-7">
                             <div className="flex flex-row gap-2">
                                 <Combobox 
                                     items={attributes}
@@ -265,7 +265,8 @@ const CandidatePanel = (id) => {
 
                             </div>
 
-                            <div>
+                            <div className="mb-15 max-w-70">
+                                <Label></Label>
                                 <Input></Input>
                             </div>
                         </div>

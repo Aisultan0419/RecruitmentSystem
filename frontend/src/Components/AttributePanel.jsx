@@ -18,6 +18,7 @@ const AttributePanel = () => {
     const [categories, setCategories] = useState([]);
     const [category, setCategory] = useState("");
     const [name, setName] = useState("");
+    const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -28,11 +29,7 @@ const AttributePanel = () => {
     const [options, setOptions] = useState([]);
     const [isModalOpen, setModalOpen] = useState(false);
     const [optionInputValue, setOptionInputValue] = useState("");
-    const itemsPerPage = 11;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedAttributes = attributes.slice(startIndex, endIndex);
-    const totalPages = Math.ceil(attributes.length / itemsPerPage); //tooltip for toolbar I should make it later
+    const itemsPerPage = 11;//tooltip for toolbar I should make it later
     const [version, setVersion] = useState(0);
     useEffect(() => {
         getAttributesData();
@@ -240,7 +237,8 @@ const AttributePanel = () => {
             else{
                 const data = await response.json();
                 console.log(data);
-                setAttributes(data);
+                setAttributes(data.attributeResponseDTO);
+                setTotalPages(data.totalItems);
                 }   
             }
         catch(ex){
@@ -248,9 +246,6 @@ const AttributePanel = () => {
         }
     }
     
-
-
-
     return (
         <div className="flex flex-col justify-start pt-17 items-center min-h-screen">
             <div className="w-full max-w-6xl px-12 py-5 h-142 shadow-[0_0_25px_rgba(0,0,0,0.1)]">
@@ -378,7 +373,7 @@ const AttributePanel = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedAttributes.map((attribute) => {
+                        {attributes.map((attribute) => {
                             const isSelected = selectedIds.includes(attribute.id);
                             return (<TableRow key={attribute.id}
                                 onClick={() => toggleSelectedRow(attribute.id)}
