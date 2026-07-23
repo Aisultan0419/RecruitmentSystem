@@ -5,7 +5,7 @@ using RecruitmentSystemApplication.Contracts;
 using RecruitmentSystemApplication.Services.Auth.Login;
 using RecruitmentSystemApplication.Services.Auth.Register;
 using RecruitmentSystemApplication.Services.Profile;
-using System.Reflection;
+using RecruitmentSystemApplication.Common.Interfaces;
 using System.Security.Claims;
 namespace RecruitmentSystemAPI.Controllers
 {
@@ -16,7 +16,8 @@ namespace RecruitmentSystemAPI.Controllers
         IRegistrationService _registerService,
         IGoogleAuthService _googleAuthService,
         ILoginService _loginService,
-        IUserProfileService _userProfileService
+        IUserProfileService _userProfileService,
+        ICommonMethods commonMethods
     ) : ControllerBase
     {
         [HttpPost("register")]
@@ -39,7 +40,7 @@ namespace RecruitmentSystemAPI.Controllers
         }
         [Authorize]
         [HttpGet("profile")]
-        public async Task<ActionResult<UserProfileDTO>> GetUserProfile()
+        public async Task<ActionResult<UserProfileDTO>> GetUserProfile() //it is not really correct, i should fix it later, profile should be avaliable to everyone
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId is null)
@@ -47,10 +48,10 @@ namespace RecruitmentSystemAPI.Controllers
                 return Unauthorized("Invalid token");
             }
             var userProfile = await _userProfileService.Get(userId);
-            return userProfile;
+            return userProfile.Value;
         }
-        [Authorize]
-        [HttpPut("profile-modify")]
+        [Authorize] 
+        [HttpPut("profile-modify")] 
         public async Task<IActionResult> ModifyUserProfile(UserProfileDTO userProfileDTO)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -79,7 +80,7 @@ namespace RecruitmentSystemAPI.Controllers
                 {
                     return BadRequest("File content type is not set");
                 }
-                var result = await _userProfileService.UploadAvatarAsync(stream, file.ContentType, userId);
+                var result = await commonMethods.UploadImageAsync(stream, file.ContentType, userId, true, null);
 
                 return result.ToActionResult();
             }

@@ -52,15 +52,51 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.ToTable("PositionTags", (string)null);
                 });
 
+            modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AttributeCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("4259a6c1-2112-432f-8499-5a52687b0ff9"),
+                            Name = "Certification"
+                        },
+                        new
+                        {
+                            Id = new Guid("2f6e4b7d-5260-447a-a78a-7b3401ffbc9d"),
+                            Name = "Domain Knowledge"
+                        },
+                        new
+                        {
+                            Id = new Guid("06e94f80-f673-4a97-986f-36278ac51ac8"),
+                            Name = "Personal Information"
+                        },
+                        new
+                        {
+                            Id = new Guid("cb188329-0a8a-4def-aa72-23847feeb4cd"),
+                            Name = "Soft Skills"
+                        });
+                });
+
             modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeDefinition", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("AttributeCategoryId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -81,10 +117,11 @@ namespace RecruitmentSystemInfrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Category");
+                    b.HasIndex("AttributeCategoryId");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_attribute_name");
 
                     b.ToTable("AttributeDefinitions");
                 });
@@ -157,13 +194,16 @@ namespace RecruitmentSystemInfrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("AttributeDefinitionId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("AttributeId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Value")
@@ -176,9 +216,11 @@ namespace RecruitmentSystemInfrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AttributeDefinitionId");
+
                     b.HasIndex("AttributeId");
 
-                    b.HasIndex("UserId", "AttributeId")
+                    b.HasIndex("UserProfileId", "AttributeId")
                         .IsUnique();
 
                     b.ToTable("CandidateAttributeValues");
@@ -368,7 +410,8 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_tag_name");
 
                     b.ToTable("Tags");
                 });
@@ -399,7 +442,8 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_email");
 
                     b.ToTable("Users");
                 });
@@ -411,7 +455,6 @@ namespace RecruitmentSystemInfrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("LastName")
@@ -471,6 +514,17 @@ namespace RecruitmentSystemInfrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeDefinition", b =>
+                {
+                    b.HasOne("RecruitmentSystemDomain.Models.AttributeCategory", "AttributeCategory")
+                        .WithMany("AttributeDefinitions")
+                        .HasForeignKey("AttributeCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttributeCategory");
+                });
+
             modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeOption", b =>
                 {
                     b.HasOne("RecruitmentSystemDomain.Models.AttributeDefinition", null)
@@ -485,7 +539,7 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasOne("RecruitmentSystemDomain.Models.Position", null)
                         .WithMany("CVs")
                         .HasForeignKey("PositionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RecruitmentSystemDomain.Models.User", null)
@@ -497,17 +551,27 @@ namespace RecruitmentSystemInfrastructure.Migrations
 
             modelBuilder.Entity("RecruitmentSystemDomain.Models.CandidateAttributeValue", b =>
                 {
+                    b.HasOne("RecruitmentSystemDomain.Models.AttributeDefinition", "AttributeDefinition")
+                        .WithMany()
+                        .HasForeignKey("AttributeDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("RecruitmentSystemDomain.Models.AttributeDefinition", null)
                         .WithMany()
                         .HasForeignKey("AttributeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RecruitmentSystemDomain.Models.User", null)
-                        .WithMany("CandidateAttributeValues")
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("RecruitmentSystemDomain.Models.UserProfile", "UserProfile")
+                        .WithMany("CandidateAttributeValues")
+                        .HasForeignKey("UserProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttributeDefinition");
+
+                    b.Navigation("UserProfile");
                 });
 
             modelBuilder.Entity("RecruitmentSystemDomain.Models.CandidateProject", b =>
@@ -526,7 +590,7 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasOne("RecruitmentSystemDomain.Models.User", "Author")
                         .WithMany()
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RecruitmentSystemDomain.Models.Position", "Position")
@@ -560,11 +624,11 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasOne("RecruitmentSystemDomain.Models.AttributeDefinition", null)
                         .WithMany()
                         .HasForeignKey("AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RecruitmentSystemDomain.Models.Position", null)
-                        .WithMany()
+                        .WithMany("AccessRules")
                         .HasForeignKey("PositionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -575,7 +639,7 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.HasOne("RecruitmentSystemDomain.Models.AttributeDefinition", null)
                         .WithMany()
                         .HasForeignKey("AttributeDefinitionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RecruitmentSystemDomain.Models.Position", null)
@@ -594,6 +658,11 @@ namespace RecruitmentSystemInfrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeCategory", b =>
+                {
+                    b.Navigation("AttributeDefinitions");
+                });
+
             modelBuilder.Entity("RecruitmentSystemDomain.Models.AttributeDefinition", b =>
                 {
                     b.Navigation("AttributeOptions");
@@ -601,6 +670,8 @@ namespace RecruitmentSystemInfrastructure.Migrations
 
             modelBuilder.Entity("RecruitmentSystemDomain.Models.Position", b =>
                 {
+                    b.Navigation("AccessRules");
+
                     b.Navigation("CVs");
 
                     b.Navigation("DiscussionPosts");
@@ -612,8 +683,6 @@ namespace RecruitmentSystemInfrastructure.Migrations
                 {
                     b.Navigation("CVs");
 
-                    b.Navigation("CandidateAttributeValues");
-
                     b.Navigation("Likes");
 
                     b.Navigation("UserProfile")
@@ -622,6 +691,8 @@ namespace RecruitmentSystemInfrastructure.Migrations
 
             modelBuilder.Entity("RecruitmentSystemDomain.Models.UserProfile", b =>
                 {
+                    b.Navigation("CandidateAttributeValues");
+
                     b.Navigation("CandidateProjects");
                 });
 #pragma warning restore 612, 618

@@ -1,5 +1,8 @@
-﻿using RecruitmentSystemApplication.Common.Interfaces;
+﻿using RecruitmentSystemApplication.Common;
+using RecruitmentSystemApplication.Common.Interfaces;
 using RecruitmentSystemApplication.Contracts;
+using RecruitmentSystemApplication.Services.Attribute.Candidate;
+using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Auth.Login;
 using RecruitmentSystemApplication.Services.Auth.Register;
 using RecruitmentSystemApplication.Services.Profile;
@@ -22,6 +25,10 @@ namespace RecruitmentSystemAPI.Extensions
             services.AddScoped<ILoginService, LoginService>();
             services.AddScoped<IUserProfileService, UserProfileService>();
             services.AddScoped<IImageService, ImageService>();
+            services.AddScoped<IAttributeRepository, AttributeRepository>();
+            services.AddScoped<IAttributeService, AttributeService>();
+            services.AddScoped<ICandidateAttributeService, CandidateAttributeService>();
+            services.AddScoped<ICommonMethods, CommonMethods>();
             return services;
         }
     }

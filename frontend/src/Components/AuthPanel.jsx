@@ -2,9 +2,12 @@ import { Input} from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
 import { VITE_API_URL } from "../config";
 import {useEffect, useRef, useState} from 'react';
+import backgroundAuth from './assets/background-auth.svg';
+import { useNavigate } from 'react-router-dom';
 const AuthPanel = () => {
     const [mode, setMode] = useState("register");
     const formRef = useRef();
+    const navigate = useNavigate();
     //i should make this page responsible later
     const handleCredentialsResponse = async (googleResponse) => {
         try{
@@ -19,6 +22,7 @@ const AuthPanel = () => {
                 const token = await response.text();
                 console.log(token);
                 localStorage.setItem("token", token);
+                navigate('/');
             } else {
                 console.error("Error on backend:", response.statusText);
             }
@@ -75,6 +79,7 @@ const AuthPanel = () => {
             }
             const token = await response.text();
             localStorage.setItem("token", token);
+            navigate('/');
         }
         catch(error){P
             console.error(error);
@@ -100,8 +105,8 @@ const AuthPanel = () => {
     });
 
     return (
-        <div className="flex items-center min-h-screen ml-20">
-            <div className=" flex flex-col align-center justify-center gap-3 bg-white border rounded-lg shadow-sm p-6 w-1/3 h-130">
+        <div className="flex items-center justify-between min-h-screen w-full pl-20">
+            <div className="flex flex-col justify-center gap-3 bg-white border rounded-lg shadow-sm p-6 w-1/3 h-130">
                 {mode === "register" ? ( <>
 
                 <h1 className="text-center font-bold text-2xl text-zinc-600">Sign up</h1>
@@ -160,12 +165,15 @@ const AuthPanel = () => {
              </div>)}
              <Button 
                 type="button" 
-                variant="link" 
-                className="w-full mt-2 text-zinc-500"
+                variant="text"
+                className="w-full mt-2 text-zinc-500 hover:text-zinc-800 "
                 onClick={() => setMode(mode === "register" ? "login" : "register")}
                 >
                 {mode === "register" ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
                 </Button>
+            </div>
+            <div className="w-1/3 h-screen">
+                <img src={backgroundAuth} alt="background-image" className="w-full h-full object-cover" />
             </div>
         </div>
     );

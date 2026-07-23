@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-namespace RecruitmentSystemInfrastructure.Utils
+namespace RecruitmentSystemInfrastructure.Extensions
 {
     public static class AuthenticationExtension
     {
@@ -21,7 +21,6 @@ namespace RecruitmentSystemInfrastructure.Utils
                         ValidIssuer = "RECRUITMENT_SYSTEM",
                         ValidateAudience = false,
                         ValidateLifetime = true,
-
                     };
                 }
                 );

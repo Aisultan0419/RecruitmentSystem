@@ -13,6 +13,5 @@ namespace RecruitmentSystemDomain.Models
         public required UserProfile UserProfile { get; set; }
         public ICollection<CV> CVs { get; set; } = [];
         public ICollection<Like> Likes { get; set; } = [];
-        public ICollection<CandidateAttributeValue> CandidateAttributeValues { get; set; } = [];
     }
 }

@@ -17,7 +17,7 @@ namespace RecruitmentSystemInfrastructure
         public DbSet<CV> CVs => Set<CV>();
         public DbSet<DiscussionPost> DiscussionPosts => Set<DiscussionPost>();
         public DbSet<Like> Likes => Set<Like>();
-
+        public DbSet<AttributeCategory> AttributeCategories => Set<AttributeCategory>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -27,7 +27,8 @@ namespace RecruitmentSystemInfrastructure
                 entity.HasKey(u => u.Id);
 
                 entity.HasIndex(u => u.Email)
-                    .IsUnique();
+                    .IsUnique()
+                    .HasDatabaseName("ix_user_email");
 
                 entity.Property(u => u.UserRole)
                     .IsRequired()
@@ -48,11 +49,6 @@ namespace RecruitmentSystemInfrastructure
                     .WithOne()
                     .HasForeignKey(l => l.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasMany(u => u.CandidateAttributeValues)
-                    .WithOne()
-                    .HasForeignKey(v => v.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<UserProfile>(entity =>
@@ -68,7 +64,20 @@ namespace RecruitmentSystemInfrastructure
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(p => p.UserId).IsUnique();
+
+                entity.HasMany(p => p.CandidateAttributeValues)
+                    .WithOne(v => v.UserProfile) 
+                    .HasForeignKey(v => v.UserProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<AttributeCategory>().HasData(
+                    new AttributeCategory { Id = Guid.Parse("4259a6c1-2112-432f-8499-5a52687b0ff9"), Name = "Certification" },
+                    new AttributeCategory { Id = Guid.Parse("2f6e4b7d-5260-447a-a78a-7b3401ffbc9d"), Name = "Domain Knowledge" },
+                    new AttributeCategory { Id = Guid.Parse("06e94f80-f673-4a97-986f-36278ac51ac8"), Name = "Personal Information" },
+                    new AttributeCategory { Id = Guid.Parse("cb188329-0a8a-4def-aa72-23847feeb4cd"), Name = "Soft Skills" } //probably I should add more here 
+                );
+
 
             modelBuilder.Entity<CandidateProject>(entity =>
             {
@@ -88,7 +97,8 @@ namespace RecruitmentSystemInfrastructure
                 entity.HasKey(t => t.Id);
 
                 entity.HasIndex(t => t.Name)
-                    .IsUnique();
+                    .IsUnique()
+                    .HasDatabaseName("ix_tag_name");
             });
 
 
@@ -101,9 +111,12 @@ namespace RecruitmentSystemInfrastructure
                     .HasMaxLength(256);
 
                 entity.HasIndex(a => a.Name)
-                    .IsUnique();
+                    .IsUnique()
+                    .HasDatabaseName("ix_attribute_name");
 
-                entity.HasIndex(a => a.Category);
+                entity.HasOne(a => a.AttributeCategory)
+                    .WithMany(a => a.AttributeDefinitions)
+                    .HasForeignKey(a => a.AttributeCategoryId);
 
                 entity.Property(a => a.DataType)
                     .IsRequired()
@@ -117,6 +130,7 @@ namespace RecruitmentSystemInfrastructure
                     .WithOne()
                     .HasForeignKey(o => o.AttributeDefinitionId)
                     .OnDelete(DeleteBehavior.Cascade);
+
             });
 
             modelBuilder.Entity<AttributeOption>(entity =>
@@ -134,13 +148,14 @@ namespace RecruitmentSystemInfrastructure
                 entity.Property(v => v.Version)
                     .IsConcurrencyToken();
 
-                entity.HasIndex(v => new { v.UserId, v.AttributeId })
+                entity.HasIndex(v => new { v.UserProfileId, v.AttributeId })
                     .IsUnique();
 
                 entity.HasOne<AttributeDefinition>()
                     .WithMany()
                     .HasForeignKey(v => v.AttributeId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
+
             });
 
             modelBuilder.Entity<Position>(entity =>
@@ -159,11 +174,16 @@ namespace RecruitmentSystemInfrastructure
                 entity.HasMany(p => p.CVs)
                     .WithOne()
                     .HasForeignKey(c => c.PositionId)
-                    .OnDelete(DeleteBehavior.Restrict); 
+                    .OnDelete(DeleteBehavior.Cascade); 
 
                 entity.HasMany(p => p.PositionAttributes)
                     .WithOne()
                     .HasForeignKey(pa => pa.PositionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(a => a.AccessRules)
+                    .WithOne()
+                    .HasForeignKey(a => a.PositionId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasMany(p => p.DiscussionPosts)
@@ -187,7 +207,7 @@ namespace RecruitmentSystemInfrastructure
                 entity.HasOne<AttributeDefinition>()
                     .WithMany()
                     .HasForeignKey(pa => pa.AttributeDefinitionId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<PositionAccessRule>(entity =>
@@ -203,15 +223,10 @@ namespace RecruitmentSystemInfrastructure
 
                 entity.Property(r => r.SecondValue);
 
-                entity.HasOne<Position>()
-                    .WithMany()
-                    .HasForeignKey(r => r.PositionId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
                 entity.HasOne<AttributeDefinition>()
                     .WithMany()
                     .HasForeignKey(r => r.AttributeDefinitionId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
 
@@ -246,7 +261,7 @@ namespace RecruitmentSystemInfrastructure
                 entity.HasOne(dp => dp.Author)
                     .WithMany()
                     .HasForeignKey(dp => dp.AuthorId)
-                    .OnDelete(DeleteBehavior.Restrict); 
+                    .OnDelete(DeleteBehavior.Cascade); 
 
                 entity.HasIndex(dp => new { dp.PositionId, dp.CreatedAt });
             });

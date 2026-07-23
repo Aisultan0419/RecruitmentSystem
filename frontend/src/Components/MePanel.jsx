@@ -7,6 +7,8 @@ import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
 import { VITE_API_URL } from "../config"; //user errors я еще их не сделал для пользователя, пока что только логирую
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogFooter} from "@/Components/ui/dialog"
+import { jwtDecode } from "jwt-decode";
+import CandidatePanel from "./CandidateAttributePanel";
 const MePanel = () => {
 
     const [isEditing, setIsEditing] = useState(false); 
@@ -15,6 +17,7 @@ const MePanel = () => {
     const [location, setLocation] = useState("");
     const [avatarUrl, setAvatarUrl] = useState(null);
     const [loading, setLoading] = useState("");
+    const [version, setVersion] = useState(0);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     function isEmptyOrSpaces(str) {
@@ -42,6 +45,8 @@ const MePanel = () => {
                     setFirstName(data.firstName);
                     setSecondName(data.lastName);
                     setLocation(data.location);
+                    setAvatarUrl(data.photoUrl);
+                    setVersion(data.version);  
                 }
             }
         catch(ex){
@@ -62,7 +67,8 @@ const MePanel = () => {
                 body: JSON.stringify({
                     FirstName: firstName,
                     LastName: secondName,
-                    Location: location
+                    Location: location,
+                    Version: version
                 })
             });
             if(!response.ok){
@@ -82,6 +88,23 @@ const MePanel = () => {
         return str.split(" ").map(word => word[0]).join("").toUpperCase().slice(0, 2);
     }
 
+    function defineId(){
+        try{
+          let token = localStorage.getItem("token");
+          const decoded = jwtDecode(token);
+    
+          const currentTime = Date.now();
+            if (decoded.exp && decoded.exp * 1000 < currentTime) {
+              return "unauthorized"; 
+            }
+          return decoded.sub || "unauthorized";
+        }
+        catch(ex){
+          console.error(ex);
+          return "unauthorized";
+        }
+      }
+    
     const applyAvatar = async(file) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -112,13 +135,11 @@ const MePanel = () => {
             console.error(error);
             setLoading("We could not apply your file, try again later");
         }
-                
-
     }
 
     return(
-        <div className="flex justify-center items-center w-full h-screen">
-            <Card className="border h-150 w-230 p-10 shadow-xl">
+        <div className="flex items-center justify-center gap-20 w-full h-screen">
+            <Card className="border flex flex-row h-150 w-230 p-10 justify-between shadow-xl">
                 <form onSubmit={editProfile} className="flex h-full flex-col">
                     <CardHeader className="flex justify-start items-center gap-5">
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -209,10 +230,13 @@ const MePanel = () => {
                     </CardContent>
                 )
                 }
-                    <div className="flex mt-80 ml-4">
+                    <div className="flex mt-4 ml-4">
                         {isEditing ? (<Button type="submit">Save</Button>) : (<Button type="button" onClick={(e) => { e.preventDefault(); setIsEditing(true)}}>Edit</Button>)}
                     </div>
                 </form>
+                <div className="max-w-md self-start h-fit mt-32 "> 
+                    <CandidatePanel id={defineId()}/>
+                </div>
             </Card>
         </div>
     );

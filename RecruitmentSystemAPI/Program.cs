@@ -1,16 +1,20 @@
 using RecruitmentSystemAPI.Extensions;
 using RecruitmentSystemInfrastructure;
 using RecruitmentSystemInfrastructure.Utils;
-
+using RecruitmentSystemApplication.Extensions;
+using RecruitmentSystemInfrastructure.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContextConnection(builder.Configuration);
 builder.Services.AddServices();
 builder.Services.AddControllers();
+builder.Services.AddValidators();
 builder.Services.AddSwaggerWithJwt();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAmazonClient(builder.Configuration);
+builder.Services.AddExceptionHandler<DBExceptionsHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
 builder.Services.AddCors(options =>
 {
@@ -24,7 +28,7 @@ builder.Services.AddCors(options =>
 var app = builder.Build(); 
 
 
-app.UseExceptionHandler(); 
+app.UseExceptionHandler(_ => { }); 
 
 app.UseSwagger();
 app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "RecruitmentSystem API v1"); });

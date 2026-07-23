@@ -2,6 +2,6 @@
 {
     public interface IImageService
     {
-        Task<string> SaveImage(Stream fileStream);
+        Task<string> SaveImage(Stream fileStream, bool isAvatar);
     }
 }

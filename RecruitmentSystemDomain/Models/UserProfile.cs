@@ -12,5 +12,6 @@ namespace RecruitmentSystemDomain.Models
         public int Version { get; set; }           
         public DateTime? UpdatedAt { get; set; }
         public ICollection<CandidateProject> CandidateProjects { get; set; } = [];
+        public ICollection<CandidateAttributeValue> CandidateAttributeValues { get; set; } = [];
     }
 }
