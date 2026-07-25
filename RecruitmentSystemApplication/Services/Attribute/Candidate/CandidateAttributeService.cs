@@ -103,7 +103,7 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
             if (candidateAttributeDataResult.IsFailed) return candidateAttributeDataResult.ToResult();
             var userProfile = candidateAttributeDataResult.Value.UserProfile;
             List<CandidateAttributesDTO> candidateAttributesDTOs = userProfile!.CandidateAttributeValues.Select(a => new CandidateAttributesDTO(a.Id,
-                a.Value, a.AttributeId, a.UserProfileId, a.Version, a.UpdatedAt)).ToList();
+                a.Value, a.AttributeId, a.AttributeDefinition.Name, a.UserProfileId, a.Version, a.UpdatedAt)).ToList();
             return Result.Ok(candidateAttributesDTOs);
         }
 

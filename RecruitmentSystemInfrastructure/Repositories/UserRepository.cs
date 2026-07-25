@@ -14,7 +14,10 @@ namespace RecruitmentSystemInfrastructure.Repositories
         }
         public async Task<UserProfile?> FindUserProfile(Guid id)
         {
-            var user = await _context.Users.Include(a => a.UserProfile).ThenInclude(a => a.CandidateAttributeValues).SingleOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users.Include(a => a.UserProfile)
+                .ThenInclude(a => a.CandidateAttributeValues)
+                .ThenInclude(a => a.AttributeDefinition)
+                .SingleOrDefaultAsync(u => u.Id == id);
             if (user is null) return null;
             var userProfile = user.UserProfile;
             return userProfile;

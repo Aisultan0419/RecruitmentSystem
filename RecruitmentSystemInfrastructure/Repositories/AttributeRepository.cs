@@ -26,7 +26,7 @@ namespace RecruitmentSystemInfrastructure.Repositories
                 .SingleOrDefaultAsync(a => a.Name.Trim().ToLower() == catergoryName.Trim().ToLower());
             return result;
         }
-        public async Task<List<AttributeResponseDTO>> GetAttributes(AttributeCategory? attributeCategory, string? prefix
+        public async Task<AttributesGetDTO> GetAttributes(AttributeCategory? attributeCategory, string? prefix
             ,int page, int pageSize)
         {
             var query = dbContext.AttributeDefinitions.AsQueryable();
@@ -38,8 +38,10 @@ namespace RecruitmentSystemInfrastructure.Repositories
 
             if (prefix is not null)
             {
-                query = query.Where(a => a.Name.StartsWith(prefix));
+                query = query.Where(a => EF.Functions.ILike(a.Name, $"{prefix}%"));
             }
+
+            var totalItems = await query.CountAsync();
 
             var result = await query.AsNoTracking()
                 .Include(a => a.AttributeCategory)
@@ -51,7 +53,9 @@ namespace RecruitmentSystemInfrastructure.Repositories
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            return result;
+
+            AttributesGetDTO attributesGetDTO = new AttributesGetDTO(totalItems, result);
+            return attributesGetDTO;
         }
         public async Task<AttributeDefinition?> GetAttribute(string Id)
         {

@@ -9,7 +9,8 @@ namespace RecruitmentSystemApplication.Common.Interfaces
     {
         Task<List<string>> GetCategories();
         Task<AttributeCategory?> GetCategory(string catergoryName);
-        Task<List<AttributeResponseDTO>> GetAttributes(AttributeCategory? attributeCategory, string? prefix, int page, int pageSize);
+        Task<AttributesGetDTO> GetAttributes(AttributeCategory? attributeCategory, string? prefix
+            , int page, int pageSize);
         Task<AttributeDefinition?> GetAttribute(string Id);
         Task ModifyAttribute(AttributeModifyDTO attributeModifyDTO
             , AttributeDefinition attributeDefinition

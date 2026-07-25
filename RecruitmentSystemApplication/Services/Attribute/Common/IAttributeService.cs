@@ -12,8 +12,8 @@ namespace RecruitmentSystemApplication.Services.Attribute.Common
     {
         Task<List<string>> GetCategories();
         Task<Result> CreateAttribute(AttributeCreateDTO attributeCreationDTO);
-        Task<Result<List<AttributeResponseDTO>>> GetAttributes(string? prefix,
-            string? category,int page ,int pageSize);
+        Task<Result<AttributesGetDTO>> GetAttributes(string? prefix,
+            string? category, int page, int pageSize);
         Task DeleteAttributes(List<Guid> attributeIds);
         Task<Result> ModifyAttribute(AttributeModifyDTO attributeModifyDTO);
     }

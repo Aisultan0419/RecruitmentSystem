@@ -53,7 +53,7 @@ namespace RecruitmentSystemApplication.Services.Attribute.Common
             return Result.Ok(category);
         }
 
-        public async Task<Result<List<AttributeResponseDTO>>> GetAttributes(string? prefix,
+        public async Task<Result<AttributesGetDTO>> GetAttributes(string? prefix,
             string? category, int page, int pageSize)
         {
             AttributeCategory? attributeCategory = null;

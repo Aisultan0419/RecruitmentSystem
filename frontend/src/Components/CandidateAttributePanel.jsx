@@ -22,9 +22,11 @@ const CandidatePanel = (id) => {
     const [attributeValues, setAttributeValues] = useState([]);
     const [attribute, setAttribute] = useState();
     const [attributePrefix, setAttributePrefix] = useState("");
-    const [attributeValueDictionary, setAttributeValueDictionary] = useState({});
+    // const [attributeValueDictionary, setAttributeValueDictionary] = useState({});
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingMode, setEditingMode] = useState(false);
+    const [totalPages, setTotalPages] = useState(1);
+    const [userValue, setUserValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [selectedNames, setSelectedNames] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -34,35 +36,38 @@ const CandidatePanel = (id) => {
     const itemPerPage = 6;
     const startIndex = (currentPage - 1) * itemPerPage;
     const endIndex = startIndex + itemPerPage;
-    const totalPages = Math.ceil(Object.keys(attributeValueDictionary).length / itemPerPage); 
-    const paginatedAttributesValues = Object.entries(attributeValueDictionary).slice(startIndex, endIndex);
+    const paginatedAttributesValues = attributeValues.slice(startIndex, endIndex);
     useEffect(() => {
         getAttributeValues();
         getCategories();
     }, []);
 
+    // useEffect(() => {
+    //     console.log(paginatedAttributesValues); 
+    // }, [paginatedAttributesValues]);
+
     useEffect(() => {
         getAttributesData();
-    }, [attributePrefix, filterCategory]);
+    }, [attributePrefix, filterCategory, isModalOpen]);
 
-    useEffect(() => {
-        if(attributes.length > 0 && attributeValues.length > 0){
-            createAttributeValueDictionary();
-        }
-    }, [attributes, attributeValues]);
+    // useEffect(() => {
+    //     if(attributes.length > 0 && attributeValues.length > 0){
+    //         createAttributeValueDictionary();
+    //     }
+    // }, [attributes, attributeValues]);
 
-    function createAttributeValueDictionary(){
-        const dictionary = {};
-        const attributeMap = new Map(attributes.map(a => [a.id, a.name]));
-        for (const val of attributeValues) {
-            const attributeName = attributeMap.get(val.attributeId);
-            if (attributeName) {
-                dictionary[attributeName] = val.value;
-            }
-        }
-        console.log(dictionary);
-        setAttributeValueDictionary(dictionary);
-    }
+    // function createAttributeValueDictionary(){
+    //     const dictionary = {}; 
+    //     const attributeMap = new Map(attributes.map(a => [a.id, a.name]));
+    //     for (const val of attributeValues) {
+    //         const attributeName = attributeMap.get(val.attributeId);
+    //         if (attributeName) {
+    //             dictionary[attributeName] = val.value;
+    //         }
+    //     }
+    //     console.log(dictionary);
+    //     setAttributeValueDictionary(dictionary);
+    // }
 
 
     const getAttributesData = async () => {
@@ -89,7 +94,7 @@ const CandidatePanel = (id) => {
             else{
                 const data = await response.json();
                 console.log(data);
-                setAttributes(data);
+                setAttributes(data.attributeResponseDTO);
                 }   
             }
         catch(ex){
@@ -113,6 +118,8 @@ const CandidatePanel = (id) => {
                 const data = await response.json();
                 console.log(data);
                 setAttributeValues(data);
+                setTotalPages(Math.ceil(data.length / itemPerPage));
+                console.log(data.length);
                 }   
             }
         catch(ex){
@@ -150,10 +157,43 @@ const CandidatePanel = (id) => {
         setSelectedNames(prev => prev.includes(name) ? prev.filter(item => item !== name) : [...prev, name]);
     }
 
-    const createAttribute = () => {}
+    const createAttribute = async () => {
+        try{
+            setIsLoading(true);
+            const response = await fetch(`${VITE_API_URL}/api/attribute/candidate-attribute`, {
+                method: 'POST',
+                headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    AttributeId: attribute.id,
+                    Value: userValue
+                })
+            });
+            if(!response.ok){
+                console.error(response.error);
+            }
+            else{
+                getAttributeValues();
+                resetForm();
+                setModalOpen(false);
+            }
+        }
+        catch(ex){
+            console.error(ex);
+        }
+        finally{
+            setIsLoading(false);   
+        }
+    }
     const deleteAttributes = () => {}
     const editAttribute = () => {}
-    const resetForm = () => {}
+    const resetForm = () => {
+        setUserValue("");
+        setAttributePrefix("");
+        setFilterCategory("");
+    }
 
     const handleOpenChange = (open) => {
         if(open && selectedNames.length > 1){
@@ -189,13 +229,13 @@ const CandidatePanel = (id) => {
                         <span>Edit attribute</span>
                     </TooltipContent>
                     </Tooltip>
-                    <DialogContent ref={dialogContentRef} onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} className="h-160 w-230 sm:max-w-250 flex flex-col">
+                    <DialogContent ref={dialogContentRef} onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} className="h-130 w-150 sm:max-w-250 flex flex-col">
                         <DialogHeader className="flex items-center pt-2 mb-5">
                             <DialogTitle className="font-medium text-base font-sans">{editingMode ? "Edit attribute" : "Fill new attribute"}</DialogTitle>
                         </DialogHeader>
 
-                        <div className="flex flex-col h-full justify-between gap-7">
-                            <div className="flex flex-row gap-2">
+                        <div className="flex flex-col h-full  gap-7">
+                            <div className="flex flex-row gap-5">
                                 <Combobox 
                                     items={attributes}
                                     value={attribute} 
@@ -238,7 +278,7 @@ const CandidatePanel = (id) => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-5">
 
                             {attribute && (
                                 <div className="ml-2 flex flex-col gap-2"> 
@@ -263,11 +303,11 @@ const CandidatePanel = (id) => {
                                 </div>
                             )}
 
+                            
+                            <div className="mb-15 max-w-70">
+                                <Input placeholder="Enter your value" value={userValue} onChange={(e) => setUserValue(e.target.value)} ></Input>
                             </div>
 
-                            <div className="mb-15 max-w-70">
-                                <Label></Label>
-                                <Input></Input>
                             </div>
                         </div>
                         <Button  disabled={isLoading}  className="w-28 absolute bottom-0 mb-4"onClick={editingMode ? editAttribute : createAttribute}>
@@ -294,15 +334,15 @@ const CandidatePanel = (id) => {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {paginatedAttributesValues.map(([name, value]) => {
-                const isSelected = selectedNames.includes(name);
+                {paginatedAttributesValues.map((item) => {
+                const isSelected = selectedNames.includes(item.attributeName);
                     return (
-                        <TableRow key={name} onClick={() => toggleSelectedRow(name)} data-state={isSelected ? "selected" : ""}>
+                        <TableRow key={item.attributeName} onClick={() => toggleSelectedRow(item.attributeName)} data-state={isSelected ? "selected" : ""}>
                             <TableCell>
                                 <Checkbox checked={isSelected}/>
                             </TableCell>
-                        <TableCell>{name}</TableCell>
-                        <TableCell>{value}</TableCell>
+                        <TableCell>{item.attributeName}</TableCell>
+                        <TableCell>{item.value}</TableCell>
                         </TableRow>
                     )}
                 )}
