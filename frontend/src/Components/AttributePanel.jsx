@@ -238,7 +238,7 @@ const AttributePanel = () => {
                 const data = await response.json();
                 console.log(data);
                 setAttributes(data.attributeResponseDTO);
-                setTotalPages(data.totalItems);
+                setTotalPages(Math.ceil(data.totalItems/itemsPerPage));
                 }   
             }
         catch(ex){

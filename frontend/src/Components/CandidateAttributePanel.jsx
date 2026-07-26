@@ -20,20 +20,23 @@ import deleteButtonIcon from "./assets/delete-button.svg";
 const CandidatePanel = (id) => {
     const [attributes, setAttributes] = useState([]);
     const [attributeValues, setAttributeValues] = useState([]);
-    const [attribute, setAttribute] = useState();
+    const [attribute, setAttribute] = useState(null);
     const [attributePrefix, setAttributePrefix] = useState("");
     // const [attributeValueDictionary, setAttributeValueDictionary] = useState({});
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingMode, setEditingMode] = useState(false);
     const [totalPages, setTotalPages] = useState(1);
+    const [editingId, setEditingId] = useState("");
     const [userValue, setUserValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedNames, setSelectedNames] = useState([]);
+    // const [selectedNames, setSelectedNames] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const dialogContentRef = useRef(null);
     const [filterCategory, setFilterCategory] = useState("");
     const [categories, setCategories] = useState([]);
     const itemPerPage = 6;
+    const [version, setVersion] = useState(0);
     const startIndex = (currentPage - 1) * itemPerPage;
     const endIndex = startIndex + itemPerPage;
     const paginatedAttributesValues = attributeValues.slice(startIndex, endIndex);
@@ -42,32 +45,10 @@ const CandidatePanel = (id) => {
         getCategories();
     }, []);
 
-    // useEffect(() => {
-    //     console.log(paginatedAttributesValues); 
-    // }, [paginatedAttributesValues]);
 
     useEffect(() => {
         getAttributesData();
     }, [attributePrefix, filterCategory, isModalOpen]);
-
-    // useEffect(() => {
-    //     if(attributes.length > 0 && attributeValues.length > 0){
-    //         createAttributeValueDictionary();
-    //     }
-    // }, [attributes, attributeValues]);
-
-    // function createAttributeValueDictionary(){
-    //     const dictionary = {}; 
-    //     const attributeMap = new Map(attributes.map(a => [a.id, a.name]));
-    //     for (const val of attributeValues) {
-    //         const attributeName = attributeMap.get(val.attributeId);
-    //         if (attributeName) {
-    //             dictionary[attributeName] = val.value;
-    //         }
-    //     }
-    //     console.log(dictionary);
-    //     setAttributeValueDictionary(dictionary);
-    // }
 
 
     const getAttributesData = async () => {
@@ -102,6 +83,27 @@ const CandidatePanel = (id) => {
         }
     }
 
+    const getAttributeById = async (id) => {
+        try{
+            const response = await fetch(`${VITE_API_URL}/api/attribute/attribute?id=${id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if(!response.ok){
+                console.error(await response.text());
+                return;
+            }
+            else{
+                const data = await response.json();
+                setAttribute(data);
+            }
+        }
+        catch(ex){
+            console.error(ex);
+        }
+    }
 
     const getAttributeValues = async () =>  {
         try{
@@ -126,8 +128,26 @@ const CandidatePanel = (id) => {
             console.error(ex);
         }
     }
-    const handleOpenEdit = () => {
-    }
+    const handleOpenEdit = async () => {
+        if (selectedIds.length !== 1) return;
+        const targetId = selectedIds[0];
+        const attributeValue = attributeValues.find(attr => attr.id === targetId);
+        if (!attributeValue) return;
+        console.log(attributeValue);
+        setEditingMode(true);
+        setEditingId(attributeValue.id);
+        setUserValue(attributeValue.value);
+        setVersion(attributeValue.version);
+        const fullAttribute = await getAttributeById(attributeValue.attributeId);
+        if (fullAttribute) {
+            setAttribute(fullAttribute);
+            setAttributePrefix(fullAttribute.name);
+        } else {
+            setAttributePrefix(attributeValue.attributeName);
+            // fetchAttributeById(attributeValue.attributeId).then(a => setAttribute(a));
+        }
+        setModalOpen(true);
+};
 
      const getCategories = async () => {
         try{
@@ -153,8 +173,8 @@ const CandidatePanel = (id) => {
         }
     }
 
-    const toggleSelectedRow = (name) => {
-        setSelectedNames(prev => prev.includes(name) ? prev.filter(item => item !== name) : [...prev, name]);
+    const toggleSelectedRow = (id) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
     }
 
     const createAttribute = async () => {
@@ -187,16 +207,41 @@ const CandidatePanel = (id) => {
             setIsLoading(false);   
         }
     }
-    const deleteAttributes = () => {}
+    const deleteAttributes = async () => {
+        try{
+            console.log(selectedIds)
+            const response = await fetch(`${VITE_API_URL}/api/attribute/candidate-attributes`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(selectedIds)
+            })
+            if(!response.ok){
+                console.error(await response.text);
+                return;
+            }
+            else{
+                getAttributeValues();
+                setSelectedIds([]);
+            }
+        }
+        catch(ex){
+            console.error(ex);
+        }
+    }
     const editAttribute = () => {}
     const resetForm = () => {
         setUserValue("");
         setAttributePrefix("");
         setFilterCategory("");
+        setVersion(0);
+        setAttribute(null);
     }
 
     const handleOpenChange = (open) => {
-        if(open && selectedNames.length > 1){
+        if(open && selectedIds.length > 1){
             return;
         }
         if (!open) {
@@ -223,7 +268,7 @@ const CandidatePanel = (id) => {
                     <Tooltip>
                     <TooltipTrigger asChild>
                     <img onClick={handleOpenEdit} src={editButtonIcon} alt="edit-button" 
-                        className={`h-6 w-6 mt-0.5 ${selectedNames.length > 1 ? "opacity-45 pointer-events-none" : "cursor-pointer"}`} />
+                        className={`h-6 w-6 mt-0.5 ${selectedIds.length > 1 ? "opacity-45 pointer-events-none" : "cursor-pointer"}`} />
                     </TooltipTrigger>
                     <TooltipContent className="font-medium font-sans bg-white text-black border-2">
                         <span>Edit attribute</span>
@@ -335,9 +380,9 @@ const CandidatePanel = (id) => {
             </TableHeader>
             <TableBody>
                 {paginatedAttributesValues.map((item) => {
-                const isSelected = selectedNames.includes(item.attributeName);
+                const isSelected = selectedIds.includes(item.id);
                     return (
-                        <TableRow key={item.attributeName} onClick={() => toggleSelectedRow(item.attributeName)} data-state={isSelected ? "selected" : ""}>
+                        <TableRow key={item.id} onClick={() => toggleSelectedRow(item.id)} data-state={isSelected ? "selected" : ""}>
                             <TableCell>
                                 <Checkbox checked={isSelected}/>
                             </TableCell>
