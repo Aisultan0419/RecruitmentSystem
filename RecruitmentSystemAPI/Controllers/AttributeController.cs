@@ -1,8 +1,6 @@
-﻿using Amazon.S3.Model;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecruitmentSystemAPI.Extensions;
-using RecruitmentSystemApplication.Services.Attribute.Get;
 using RecruitmentSystemApplication.Services.Attribute.Candidate;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Create;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Modify;
@@ -10,7 +8,6 @@ using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Attribute.Create;
 using RecruitmentSystemApplication.Services.Attribute.Modify;
 using System.Security.Claims;
-using FluentResults;
 namespace RecruitmentSystemAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -24,6 +21,14 @@ namespace RecruitmentSystemAPI.Controllers
         {
             var categories = await attributeService.GetCategories();
             return Ok(categories);
+        }
+
+        [HttpGet("attribute")]
+        public async Task<IActionResult> GetAttribute([FromQuery] string id)
+        {
+            var attributeResult = await attributeService.GetAttributeAsync(id);
+            if (attributeResult.IsFailed) return attributeResult.ToActionResult();
+            return Ok(attributeResult.Value);
         }
 
         [HttpPost("attribute")]

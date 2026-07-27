@@ -16,5 +16,6 @@ namespace RecruitmentSystemApplication.Services.Attribute.Common
             string? category, int page, int pageSize);
         Task DeleteAttributes(List<Guid> attributeIds);
         Task<Result> ModifyAttribute(AttributeModifyDTO attributeModifyDTO);
+        Task<Result<AttributeResponseDTO?>> GetAttributeAsync(string id);
     }
 }

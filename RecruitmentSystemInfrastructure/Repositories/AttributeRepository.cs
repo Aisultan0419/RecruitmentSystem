@@ -61,6 +61,7 @@ namespace RecruitmentSystemInfrastructure.Repositories
         {
             Guid.TryParse(Id, out Guid parsedId); //i should handle later format of guid 
             var attribute = await dbContext.AttributeDefinitions
+                .Include(a => a.AttributeCategory)
                 .Include(a => a.AttributeOptions)
                 .SingleOrDefaultAsync(a => a.Id == parsedId);
             return attribute;

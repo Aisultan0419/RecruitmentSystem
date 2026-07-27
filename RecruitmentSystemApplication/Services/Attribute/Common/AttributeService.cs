@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using Microsoft.AspNetCore.Mvc;
 using RecruitmentSystemApplication.Common.Interfaces;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Create;
 using RecruitmentSystemApplication.Services.Attribute.Create;
@@ -96,6 +97,20 @@ namespace RecruitmentSystemApplication.Services.Attribute.Common
             await attributeRepository.ModifyAttribute(attributeModifyDTO, attribute.Value, validationResult?.Value);
             await baseRepository.SaveChanges();
             return Result.Ok();
+        }
+
+        public async Task<Result<AttributeResponseDTO?>> GetAttributeAsync(string id)
+        {
+            var attribute = await attributeRepository.GetAttribute(id);
+            if (attribute is null) return Result.Fail(new Error($"The attribute with id {id} not found").WithMetadata("StatusCode", 404));
+            AttributeResponseDTO attributeResponseDTO = new(attribute.Id
+                ,attribute.Name
+                ,attribute.DataType.ToString()
+                ,attribute.AttributeCategory.Name
+                ,attribute.Version
+                ,attribute.AttributeOptions.Select(o => o.Value).ToList());
+
+            return attributeResponseDTO;
         }
     }
 }
