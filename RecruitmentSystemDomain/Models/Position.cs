@@ -7,7 +7,7 @@ namespace RecruitmentSystemDomain.Models
         public required string Title { get; set; }
         public string? Description { get; set; }
         public int MaxProjectsCount { get; set; }
-
+        public bool IsDraft { get; set; } = true;
         public bool IsPublic { get; set; }
         public int Version { get; set; } = 0;                 
         public DateTime CreatedAt { get; set; }             

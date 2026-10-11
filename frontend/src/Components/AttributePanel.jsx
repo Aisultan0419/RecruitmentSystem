@@ -155,7 +155,7 @@ const AttributePanel = () => {
 
     const editAttribute = async () => {
        try{
-            setIsLoading(true);
+           setIsLoading(true);
            const response = await fetch(`${VITE_API_URL}/api/attribute/attribute`, {
                 method: 'PUT',
                 headers: {
@@ -297,7 +297,6 @@ const AttributePanel = () => {
                                     <SelectItem value="oneOfMany">Select</SelectItem>
                                 </SelectContent>
                             </Select>
-
                             <Select value={category} onValueChange={setCategory}>
                                 <SelectTrigger className="w-70">
                                     <SelectValue placeholder="Attribute category" />

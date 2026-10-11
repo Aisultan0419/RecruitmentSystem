@@ -1,7 +1,5 @@
 ﻿using FluentResults;
-using Microsoft.AspNetCore.Mvc;
 using RecruitmentSystemApplication.Common.Interfaces;
-using RecruitmentSystemApplication.Services.Attribute.Candidate.Create;
 using RecruitmentSystemApplication.Services.Attribute.Create;
 using RecruitmentSystemApplication.Services.Attribute.Get;
 using RecruitmentSystemApplication.Services.Attribute.Modify;

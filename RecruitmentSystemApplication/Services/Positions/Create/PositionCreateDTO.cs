@@ -1,9 +1,9 @@
-﻿
+﻿using RecruitmentSystemDomain.Models;
+
 namespace RecruitmentSystemApplication.Services.Positions.Create
 {
-    //public record PositionCreateDTO(
-    //    string Title
-    //   ,string? Description
-    //   ,int MaxProjectsCount
-    //   , );
+    public record PositionCreateDTO(
+        string Title
+       ,string? Description
+       ,int MaxProjectsCount);
 }

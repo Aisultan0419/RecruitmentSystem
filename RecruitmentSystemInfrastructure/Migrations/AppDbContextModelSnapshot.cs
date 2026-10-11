@@ -317,6 +317,9 @@ namespace RecruitmentSystemInfrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsDraft")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean");
 
