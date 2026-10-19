@@ -24,6 +24,10 @@ namespace RecruitmentSystemApplication.Common
             Guid.TryParse(userId, out Guid result);
             UserProfile? userProfile = await userRepository.FindUserProfile(result);
             if (userProfile is null) return Result.Fail(new Error("Unauthorized user").WithMetadata("StatusCode", 401));
+            if(isAvatar && userProfile.PhotoUrl is not null)
+            {
+                await imageService.DeleteImage(userProfile.PhotoUrl);
+            }
             if(isAvatar) userProfile.PhotoUrl = imageUrl;
             else
             {

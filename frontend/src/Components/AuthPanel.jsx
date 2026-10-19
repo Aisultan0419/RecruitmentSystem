@@ -4,86 +4,59 @@ import { VITE_API_URL } from "../config";
 import {useEffect, useRef, useState} from 'react';
 import backgroundAuth from './assets/background-auth.svg';
 import { useNavigate } from 'react-router-dom';
+import { api } from "../api/client";
+import { toast } from "sonner";
 const AuthPanel = () => {
     const [mode, setMode] = useState("register");
     const formRef = useRef();
     const navigate = useNavigate();
     //i should make this page responsible later
     const handleCredentialsResponse = async (googleResponse) => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/auth-google?googleClientToken=${googleResponse.credential}`,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }}
-            );
-
-            if (response.ok) {
-                const token = await response.text();
-                console.log(token);
-                localStorage.setItem("token", token);
-                navigate('/');
-            } else {
-                console.error("Error on backend:", response.statusText);
-            }
+        const toastId = toast.loading("Signing in...");
+        const {data, error} = await api.post(`/api/user/auth-google?googleClientToken=${googleResponse.credential}`,
+            {}
+        );
+        if(error){
+            toast.dismiss(toastId);
+            return;
         }
-        catch(error){
-            console.error(error);
-        }
-        
+        localStorage.setItem("token", data);
+        toast.success("Logged in", {id: toastId});
+        navigate("/");
     };
     
     const handleRegistration = async (e) => {
         e.preventDefault();
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/register`,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: formRef.current.email.value,
-                    plainPassword: formRef.current.password.value,
-                    firstName: formRef.current.first_name.value,
-                    lastName: formRef.current.last_name.value,
-                    location: formRef.current.location.value
-                 })
-            }); 
-            if(!response.ok){
-                console.error(await response.text());
-                return;
-            }
+        const toastId = toast.loading("Creating account...")
+        const {data, error} = await api.post("/api/user/register", {
+            email: formRef.current.email.value,
+            plainPassword: formRef.current.password.value,
+            firstName: formRef.current.first_name.value,
+            lastName: formRef.current.last_name.value,
+            location: formRef.current.location.value
+        })
+        if(error)
+        {   
+            toast.dismiss(toastId)
+            return; 
         }
-        catch(error){
-            console.error(error);
-        }
+        toast.success("Account created. Please log in", {id: toastId});
+        setMode("login");
     }
 
     const handleLogin = async (e) => {
         e.preventDefault();
-
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/login`,{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    Email: formRef.current.email.value,
-                    Password: formRef.current.password.value
-                })
-            });
-            if(!response.ok){
-                console.error(await response.text())
-                return;
-            }
-            const token = await response.text();
-            localStorage.setItem("token", token);
-            navigate('/');
+        const toastId = toast.loading("Login...");
+        const {data, error} = await api.post("/api/user/login", {
+            Email: formRef.current.email.value,
+            Password: formRef.current.password.value
+        })
+        if(error){
+            toast.dismiss(toastId);
+            return;
         }
-        catch(error){P
-            console.error(error);
-        }
+        localStorage.setItem("token", data);
+        navigate('/');
     }
 
     useEffect(() => {

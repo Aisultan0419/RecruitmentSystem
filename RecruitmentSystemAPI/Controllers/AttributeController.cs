@@ -78,6 +78,29 @@ namespace RecruitmentSystemAPI.Controllers
             return result.ToActionResult();
         }
 
+        [HttpPut("candidate-attribute-image")]
+        [Authorize]
+        public async Task<IActionResult> ModifyCandidateImageAttribute([FromForm] CandidateAttributeImageDTO candidateAttributeImageDTO)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId is null)
+            {
+                return Unauthorized("Invalid token");
+            }
+            var file = candidateAttributeImageDTO.file;
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+            using (Stream stream = file.OpenReadStream())
+            {
+                if (file.ContentType is null)
+                {
+                    return BadRequest("File content type is not set");
+                }
+                var result = await candidateAttributeService.ModifyCandidateAttributeImage(stream, file.ContentType, userId, candidateAttributeImageDTO);
+                return result.ToActionResult();
+            }
+        }
+
         [HttpPost("candidate-attribute-image")]
         [Authorize]
         public async Task<IActionResult> CreateCandidateImageAttribute([FromForm] CandidateAttributeImageDTO candidateAttributeImageDTO)

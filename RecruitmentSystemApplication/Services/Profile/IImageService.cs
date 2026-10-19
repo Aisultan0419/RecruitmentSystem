@@ -3,5 +3,6 @@
     public interface IImageService
     {
         Task<string> SaveImage(Stream fileStream, bool isAvatar);
+        Task DeleteImage(string imageUrl);
     }
 }

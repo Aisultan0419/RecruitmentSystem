@@ -1,6 +1,7 @@
 ﻿using RecruitmentSystemApplication.Common;
 using RecruitmentSystemApplication.Common.Interfaces;
 using RecruitmentSystemApplication.Contracts;
+using RecruitmentSystemApplication.Services;
 using RecruitmentSystemApplication.Services.Attribute.Candidate;
 using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Auth.Login;
@@ -33,6 +34,7 @@ namespace RecruitmentSystemAPI.Extensions
             services.AddScoped<ICandidateAttributeService, CandidateAttributeService>();
             services.AddScoped<ICommonMethods, CommonMethods>();
             services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<AttributeValueValidator>();
             return services;
         }
     }

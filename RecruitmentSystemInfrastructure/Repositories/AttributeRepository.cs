@@ -67,6 +67,14 @@ namespace RecruitmentSystemInfrastructure.Repositories
             return attribute;
         }
 
+        public async Task<CandidateAttributeValue?> GetCandidateAttributeValue(UserProfile userProfile, Guid attributeId)
+        {
+            var candidateAttributeValue = await dbContext.CandidateAttributeValues
+                .Where(a => a.UserProfileId == userProfile.Id && a.AttributeId == attributeId)
+                .SingleOrDefaultAsync();
+            return candidateAttributeValue;
+        }
+
         public async Task ModifyAttribute(AttributeModifyDTO attributeModifyDTO
             ,AttributeDefinition attributeDefinition
             ,AttributeCategory? category)

@@ -23,7 +23,7 @@ namespace RecruitmentSystemApplication.Services.Auth.Login
             }
             if (user.PasswordHash is null)
             {
-                return Result.Fail(""); //i should handle it later
+                return Result.Fail("This account uses Google sign-in. Please continue with Google.");
             }
             var isPasswordValid = hashingService.VerifyPassword(loginDTO.Password, user.PasswordHash!);
             if (isPasswordValid is false)

@@ -122,3 +122,7 @@
     @apply font-sans;
     }
 }
+::-webkit-scrollbar { width: 3px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #a1a1aa; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #71717a; }
+::-webkit-scrollbar-track { background: transparent; }

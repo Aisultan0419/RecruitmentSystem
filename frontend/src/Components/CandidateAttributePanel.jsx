@@ -15,7 +15,10 @@ import editButtonIcon from "./assets/edit-button.svg";
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/Components/ui/select"
 import deleteButtonIcon from "./assets/delete-button.svg";
-
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css"
+import { api } from "../api/client";
+import { toast } from "sonner";
 
 const CandidatePanel = (id) => {
     const [attributes, setAttributes] = useState([]);
@@ -29,16 +32,21 @@ const CandidatePanel = (id) => {
     const [editingId, setEditingId] = useState("");
     const [userValue, setUserValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [index, setIndex] = useState(-1);
     // const [selectedNames, setSelectedNames] = useState([]);
     const [selectedIds, setSelectedIds] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const dialogContentRef = useRef(null);
     const [filterCategory, setFilterCategory] = useState("");
     const [categories, setCategories] = useState([]);
+    const [fileName, setFileName] = useState("");
     const itemPerPage = 6;
+    const attributeNameMax = 26;
     const [version, setVersion] = useState(0);
     const startIndex = (currentPage - 1) * itemPerPage;
     const endIndex = startIndex + itemPerPage;
+    const [file, setFile] = useState(null);
     const paginatedAttributesValues = attributeValues.slice(startIndex, endIndex);
     useEffect(() => {
         getAttributeValues();
@@ -51,83 +59,11 @@ const CandidatePanel = (id) => {
     }, [attributePrefix, filterCategory, isModalOpen]);
 
 
-    const getAttributesData = async () => {
-        try{
-            const params = new URLSearchParams();
-            if(attributePrefix.trim() != ""){
-                params.append("prefix", attributePrefix.trim());
-            }
-            if(filterCategory && filterCategory.trim() != ""){
-                params.append("category", filterCategory.trim());
-            }
-            params.append("page", 1);
-            params.append("pageSize", itemPerPage);
+    const dragPhoto = () => {
+        setLoading("Uploading...");
 
-            const response = await fetch(`${VITE_API_URL}/api/attribute/attributes?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                    'Content-Type': 'application/json'
-                }});
-            
-            if(!response.ok)
-                console.error(await response.text());
-            else{
-                const data = await response.json();
-                console.log(data);
-                setAttributes(data.attributeResponseDTO);
-                }   
-            }
-        catch(ex){
-            console.error(ex);
-        }
     }
 
-    const getAttributeById = async (id) => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/attribute/attribute?id=${id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            if(!response.ok){
-                console.error(await response.text());
-                return;
-            }
-            else{
-                const data = await response.json();
-                setAttribute(data);
-            }
-        }
-        catch(ex){
-            console.error(ex);
-        }
-    }
-
-    const getAttributeValues = async () =>  {
-        try{
-            console.log(id);
-            const response = await fetch(`${VITE_API_URL}/api/attribute/candidate-attributes?userId=${id.id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }});
-            
-            if(!response.ok)
-                console.error(await response.text());
-            else{
-                const data = await response.json();
-                console.log(data);
-                setAttributeValues(data);
-                setTotalPages(Math.ceil(data.length / itemPerPage));
-                console.log(data.length);
-                }   
-            }
-        catch(ex){
-            console.error(ex);
-        }
-    }
     const handleOpenEdit = async () => {
         if (selectedIds.length !== 1) return;
         const targetId = selectedIds[0];
@@ -144,99 +80,145 @@ const CandidatePanel = (id) => {
             setAttributePrefix(fullAttribute.name);
         } else {
             setAttributePrefix(attributeValue.attributeName);
-            // fetchAttributeById(attributeValue.attributeId).then(a => setAttribute(a));
         }
         setModalOpen(true);
-};
-
-     const getCategories = async () => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/attribute/categories`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': "bearer " + localStorage.getItem("token"),
-                    'Content-Type': "application/json"
-                }});
-            
-                if(!response.ok){
-                    console.error(response.error);
-                    return;
-                }
-                else{
-                    const data = await response.json();
-                    console.log(data);
-                    setCategories(data);
-                }
-        }
-        catch(ex){
-            console.error(ex);
-        }
-    }
+    };
 
     const toggleSelectedRow = (id) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
     }
 
+    const getAttributesData = async () => {
+        const params = new URLSearchParams();
+        if (attributePrefix.trim() !== "") {
+            params.append("prefix", attributePrefix.trim());
+        }
+        if (filterCategory && filterCategory.trim() !== "") {
+            params.append("category", filterCategory.trim());
+        }
+        params.append("page", 1);
+        params.append("pageSize", itemPerPage);
+
+        const { data, error } = await api.get(`/api/attribute/attributes?${params.toString()}`);
+        if (error) return;
+        
+        setAttributes(data.attributeResponseDTO);
+    }
+
+    const getAttributeById = async (id) => {
+        const { data, error } = await api.get(`/api/attribute/attribute?id=${id}`);
+        if (error) return null;
+        
+        setAttribute(data);
+        return data; 
+    }
+
+    const getAttributeValues = async () => {
+        const { data, error } = await api.get(`/api/attribute/candidate-attributes?userId=${id.id}`);
+        if (error) return;
+
+        setAttributeValues(data);
+        setTotalPages(Math.ceil(data.length / itemPerPage));
+    }
+
+    const getCategories = async () => {
+        const { data, error } = await api.get(`/api/attribute/categories`);
+        if (error) return;
+        
+        setCategories(data);
+    }
+
+    const saveAttributeImage = async (file) => {
+        const formData = new FormData();
+        formData.append("AttributeId", attribute.id);
+        formData.append("file", file);
+        
+        setIsLoading(true);
+        const toastId = toast.loading("Saving...");
+
+        const { error } = await api.post("/api/attribute/candidate-attribute-image", formData);
+        
+        setIsLoading(false);
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
+        }
+
+        toast.success("Saved", { id: toastId });
+        setPreviewUrl("");
+        setFileName("");
+        getAttributeValues();
+        setFile(null);
+        setModalOpen(false);
+    }
+
     const createAttribute = async () => {
-        try{
-            setIsLoading(true);
-            const response = await fetch(`${VITE_API_URL}/api/attribute/candidate-attribute`, {
-                method: 'POST',
-                headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    AttributeId: attribute.id,
-                    Value: userValue
-                })
-            });
-            if(!response.ok){
-                console.error(response.error);
-            }
-            else{
-                getAttributeValues();
-                resetForm();
-                setModalOpen(false);
-            }
+        setIsLoading(true);
+        const toastId = toast.loading("Saving...");
+
+        const { error } = await api.post("/api/attribute/candidate-attribute", {
+            AttributeId: attribute.id,
+            Value: userValue
+        });
+
+        setIsLoading(false);
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
-        catch(ex){
-            console.error(ex);
-        }
-        finally{
-            setIsLoading(false);   
-        }
+
+        toast.success("Saved successfully", { id: toastId });
+        getAttributeValues();
+        resetForm();
+        setModalOpen(false);
     }
+
     const deleteAttributes = async () => {
-        try{
-            console.log(selectedIds)
-            const response = await fetch(`${VITE_API_URL}/api/attribute/candidate-attributes`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(selectedIds)
-            })
-            if(!response.ok){
-                console.error(await response.text);
-                return;
-            }
-            else{
-                getAttributeValues();
-                setSelectedIds([]);
-            }
+        const toastId = toast.loading("Deleting...");
+
+        const { error } = await api.delete("/api/attribute/candidate-attributes", selectedIds);
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
-        catch(ex){
-            console.error(ex);
-        }
+
+        toast.success("Attributes deleted", { id: toastId });
+        getAttributeValues();
+        setSelectedIds([]);
     }
-    const editAttribute = () => {}
+    
+    const saveLocalFile = (File) => {
+        setFileName(File.name);
+        setPreviewUrl(URL.createObjectURL(File));
+        setFile(File);
+    }
+
+    const editAttribute = async (attributeId) => {
+        const toastId = toast.loading("Saving...");
+        const {data, error} = await api.put("/api/attribute/candidate-attribute", {
+            AttributeId: attributeId,
+            Value: userValue,
+            Version: version
+        });
+        if(error){
+            toast.dismiss(toastId);
+            return;
+        }
+        toast.success("Saved successfully", { id: toastId });
+        getAttributeValues();
+        resetForm();
+    }
+
     const resetForm = () => {
         setUserValue("");
         setAttributePrefix("");
         setFilterCategory("");
+        setSelectedIds([]);
         setVersion(0);
+        setModalOpen(false);
         setAttribute(null);
     }
 
@@ -315,7 +297,7 @@ const CandidatePanel = (id) => {
                                     <SelectTrigger>
                                         <SelectValue placeholder="Attribute category" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="w-18">
                                         <SelectItem value="">All</SelectItem>
                                         {categories.map((category, index) => (
                                             <SelectItem key={index} value={category}>{category}</SelectItem>
@@ -339,7 +321,7 @@ const CandidatePanel = (id) => {
                                         <div className="flex flex-wrap gap-2">
                                             <Label>Attribute options</Label>
                                             {attribute.attributeOptions.map((option, index) => (
-                                                <div className="border p-2 rounded-md bg-zinc-100 border-zinc-400 ">
+                                                <div className="border p-1 rounded-md bg-zinc-100 border-zinc-400 ">
                                                     <span key={index} className="text-[15px] font-sans">{option}</span>
                                                 </div>
                                             ))}
@@ -348,18 +330,52 @@ const CandidatePanel = (id) => {
                                 </div>
                             )}
 
-                            
-                            <div className="mb-15 max-w-70">
-                                <Input placeholder="Enter your value" value={userValue} onChange={(e) => setUserValue(e.target.value)} ></Input>
-                            </div>
+                            { attribute && (
+                                attribute.dataType != "Image" ? (
+                                <div className="mb-15 max-w-72">
+                                    <Input placeholder="Enter your value" value={userValue} onChange={(e) => setUserValue(e.target.value)} ></Input>
+                                </div>) : (<>
+                                <Dropzone onDrop={
+                                    (acceptedFiles, rejectedFiles) => {
+                                        if(rejectedFiles.length > 0){
+                                            console.log("You can insert only one file");
+                                            return;
+                                        }
+                                        if(acceptedFiles.length > 0){
+                                            const file = acceptedFiles[0];
+                                            saveLocalFile(file);
+                                        }
+                                    }
+                                } maxFiles={1}>
+                                    {
+                                        ({getRootProps, getInputProps}) => (
+                                            fileName.trim() === "" ?
+                                            <div {...getRootProps()} className="border-2 border-dashed
+                                             border-gray-300 rounded-xl p-8 text-center cursor-pointer 
+                                             hover:border-gray-400 transition-colors flex flex-col items-center max-w-40 justify-center max-h-30"> 
+                                                <Input {...getInputProps()} />
+                                                <p className="text-sm text-gray-600 font-medium">Drag your files here or click</p>
+                                                <span className="text-sm text-gray-600 font-medium">Supported formats JPG, PNG, WEBP</span>
+                                            </div> :
+                                            <div onClick={() => setIndex(0)} className="border-2 hover:cursor-pointer rounded-md w-fit gap-1.5 inline-flex items-center hover:border-zinc-300 transition-colors text-sm p-2">
+                                                <span>{fileName}</span>
+                                                <button type="button" onClick={(e) => {e.stopPropagation(); setFileName(""); setPreviewUrl(null);}} className="text-zinc-400 hover:text-zinc-800 transition-colors" >×</button>
+                                            </div>
+                                        ) 
+                                    }
+                                </Dropzone>
+                                    </>)
+                                )
+                            }
 
                             </div>
                         </div>
-                        <Button  disabled={isLoading}  className="w-28 absolute bottom-0 mb-4"onClick={editingMode ? editAttribute : createAttribute}>
-                            {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Saving... </>) : "Save"}
+                        <Button className="w-28 absolute bottom-0 mb-4"onClick={attribute?.dataType === "Image" ? () => saveAttributeImage(file) : ( editingMode ? () => editAttribute(attribute.id) : createAttribute) }>
+                            <span> Save </span>
                         </Button>
                     </DialogContent>
                 </Dialog>
+                <Lightbox carousel={{ finite: true }} render={{ buttonPrev: () => null, buttonNext: () => null }} open={index >= 0} close={() => setIndex(-1)} index={index} slides={previewUrl ? [{ src: previewUrl }] : []} ></Lightbox>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <img onClick={deleteAttributes} src={deleteButtonIcon} alt="delete-button" className="w-7 h-7 cursor-pointer"/>
@@ -386,8 +402,21 @@ const CandidatePanel = (id) => {
                             <TableCell>
                                 <Checkbox checked={isSelected}/>
                             </TableCell>
-                        <TableCell>{item.attributeName}</TableCell>
-                        <TableCell>{item.value}</TableCell>
+                        <TableCell>
+                            {item.attributeName.length < 30 ? (
+                                item.attributeName
+                            ) : (
+                                <Tooltip>
+                                    <TooltipTrigger className="text-left">
+                                        {item.attributeName.slice(0, attributeNameMax) + "..."}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {item.attributeName}
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </TableCell>
+                        <TableCell>{item.dataType != 2 ? item.value : <span onClick={() => {setPreviewUrl(item.value); setIndex(0); toggleSelectedRow(item.id)}} className="underline cursor-pointer hover:text-zinc-600">View image</span>}</TableCell>
                         </TableRow>
                     )}
                 )}

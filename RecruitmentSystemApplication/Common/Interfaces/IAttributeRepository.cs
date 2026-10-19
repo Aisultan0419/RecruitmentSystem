@@ -15,5 +15,7 @@ namespace RecruitmentSystemApplication.Common.Interfaces
         Task ModifyAttribute(AttributeModifyDTO attributeModifyDTO
             , AttributeDefinition attributeDefinition
             , AttributeCategory? category);
+
+        Task<CandidateAttributeValue?> GetCandidateAttributeValue(UserProfile userProfile, Guid attributeId);
     }
 }

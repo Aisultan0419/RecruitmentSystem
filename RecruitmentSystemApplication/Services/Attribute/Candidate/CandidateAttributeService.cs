@@ -6,9 +6,11 @@ using RecruitmentSystemApplication.Common.Interfaces;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Create;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Get;
 using RecruitmentSystemApplication.Services.Attribute.Candidate.Modify;
+using RecruitmentSystemApplication.Services.Profile;
 using RecruitmentSystemDomain.Enums;
 using RecruitmentSystemDomain.Models;
 using System.Globalization;
+using System.Net.Mime;
 
 namespace RecruitmentSystemApplication.Services.Attribute.Candidate
 {
@@ -16,14 +18,10 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
         IUserRepository userRepository
         , IAttributeRepository attributeRepository
         , IBaseRepository baseRepository
-        , ICommonMethods commonMethods) : ICandidateAttributeService
+        , ICommonMethods commonMethods
+        ,AttributeValueValidator attributeValueValidator,
+        IImageService imageService) : ICandidateAttributeService
     {
-        private const int STRING_MAX_SIZE = 255;
-        private const int TEXT_MAX_SIZE = 50_000;
-        private const decimal MIN_VALUE = -999999999.99m;
-        private const decimal MAX_VALUE = +999999999.99m;
-        readonly string[] allowedDateFormats = { "yyyy-MM-dd" };
-
         private record CandidateAttributeData(UserProfile? UserProfile, AttributeDefinition? AttributeDefinition);
 
         private async Task<Result<CandidateAttributeData>> GetCandidateAttributeData(string userId, string? attributeId)
@@ -44,12 +42,41 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
 
             return new CandidateAttributeData(userProfile, attribute);
         }
+
+        public async Task<Result> ModifyCandidateAttributeImage(Stream fileStream, string contentType, string userId, CandidateAttributeImageDTO candidateAttributeImageDTO)
+        {
+            Result<CandidateAttributeData> candidateAttributeDataResult = await GetCandidateAttributeData(userId, candidateAttributeImageDTO.AttributeId);
+            if (candidateAttributeDataResult.IsFailed) return candidateAttributeDataResult.ToResult();
+            var (userProfile, attribute) = candidateAttributeDataResult.Value;
+            if (attribute!.DataType != DataType.Image)
+            {
+                return Result.Fail(new Error("You can insert image only with image data type attribute").WithMetadata("StatusCode", 400));
+            }
+            var candidateAttributeValue = await attributeRepository.GetCandidateAttributeValue(userProfile!, attribute.Id);
+            if (candidateAttributeValue is null) return Result.Fail(new Error("Attribute value was not found").WithMetadata("StatusCode", 404));
+
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+
+            if (!allowedContentTypes.Contains(contentType))
+            {
+                return Result.Fail("You can only insert PNG/JPEG/WEBP");
+            }
+
+            var imageUrl = await imageService.SaveImage(fileStream, false);
+            await imageService.DeleteImage(imageUrl);
+            candidateAttributeValue.Value = imageUrl;
+            candidateAttributeValue.UpdatedAt = DateTime.UtcNow;
+            candidateAttributeValue.Version += 1;
+            await baseRepository.SaveChanges();
+            return Result.Ok();
+        }
+
         public async Task<Result> CreateCandidateAttribute(string userId, CandidateAttributeCreateDTO candidateAttributeCreateDTO)
         {
             Result<CandidateAttributeData> candidateAttributeDataResult = await GetCandidateAttributeData(userId, candidateAttributeCreateDTO.AttributeId);
             if (candidateAttributeDataResult.IsFailed) return candidateAttributeDataResult.ToResult();
             var (userProfile, attribute) = candidateAttributeDataResult.Value;
-            var validationResult = await ValidateValue(candidateAttributeCreateDTO.Value
+            var validationResult = await attributeValueValidator.ValidateValue(candidateAttributeCreateDTO.Value
                 ,attribute!.DataType, attribute!.Id.ToString());
             if (validationResult.IsFailed) return validationResult.ToResult();
 
@@ -73,7 +100,7 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
             Result<CandidateAttributeData> candidateAttributeDataResult = await GetCandidateAttributeData(userId, candidateAttributeModifyDTO.AttributeId);
             if (candidateAttributeDataResult.IsFailed) return candidateAttributeDataResult.ToResult();
             var (userProfile, attribute) = candidateAttributeDataResult.Value;
-            var validationResult = await ValidateValue(candidateAttributeModifyDTO.Value
+            var validationResult = await attributeValueValidator.ValidateValue(candidateAttributeModifyDTO.Value
                 , attribute!.DataType, attribute!.Id.ToString());
             if (validationResult.IsFailed) return validationResult.ToResult();
 
@@ -103,7 +130,7 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
             if (candidateAttributeDataResult.IsFailed) return candidateAttributeDataResult.ToResult();
             var userProfile = candidateAttributeDataResult.Value.UserProfile;
             List<CandidateAttributesDTO> candidateAttributesDTOs = userProfile!.CandidateAttributeValues.Select(a => new CandidateAttributesDTO(a.Id,
-                a.Value, a.AttributeId, a.AttributeDefinition.Name, a.UserProfileId, a.Version, a.UpdatedAt)).ToList();
+                a.Value, a.AttributeId, a.AttributeDefinition.Name, a.AttributeDefinition.DataType, a.UserProfileId, a.Version, a.UpdatedAt)).ToList();
             return Result.Ok(candidateAttributesDTOs);
         }
 
@@ -128,63 +155,6 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
             return result.ToResult();
         }
 
-        private async Task<Result<bool>> ValidateValue(string value, DataType dataType, string attributeId)
-        {
-            if (dataType is DataType.String && value.Length > STRING_MAX_SIZE)
-            {
-                return Result.Fail(new Error($"The value is too long. Maximum allowed length is {STRING_MAX_SIZE} characters.").WithMetadata("StatusCode", 400));
-            }
-            else if (dataType is DataType.Text && value.Length > TEXT_MAX_SIZE)
-            {
-                return Result.Fail(new Error($"The value is too long. Maximum allowed length is {TEXT_MAX_SIZE} characters.").WithMetadata("StatusCode", 400));
-            }
-            else if (dataType is DataType.Numeric)
-            {
-                if (!decimal.TryParse(value, CultureInfo.InvariantCulture, out decimal numericValue))
-                {
-                    return Result.Fail(new Error("The value is invalid for numeric data type").WithMetadata("StatusCode", 400));
-                }
-                else if (numericValue < MIN_VALUE || numericValue > MAX_VALUE)
-                {
-                    return Result.Fail(new Error("The value size is invalid").WithMetadata("StatusCode", 400));
-                }
-            }
-            else if (dataType is DataType.Date && !DateTime.TryParseExact(value, allowedDateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-            {
-                return Result.Fail(new Error("Invalid date format").WithMetadata("StatusCode", 400));
-            }
-            else if (dataType is DataType.Period)
-            {
-                Result periodError = Result.Fail(new Error("Invalid period format").WithMetadata("StatusCode", 400));
-                var parts = value.Split("/");
-                if (parts.Length != 2)
-                {
-                    return periodError;
-                }
-                else if (!DateTime.TryParseExact(parts[0], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime start) ||
-                          !DateTime.TryParseExact(parts[1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime end))
-                {
-                    return periodError;
-                }
-                else if (end < start)
-                {
-                    return periodError;
-                }
-            }
-            else if (dataType is DataType.Boolean)
-            {
-                string parsedBoolean = value.Replace(" ", "").ToLower();
-                if (parsedBoolean != "false" && parsedBoolean != "true")
-                {
-                    return Result.Fail(new Error("Invalid boolean format").WithMetadata("StatusCode", 400));
-                }
-            }
-            else if (dataType is DataType.OneOfMany)
-            {
-                var attribute = await attributeRepository.GetAttribute(attributeId);
-                if(attribute!.AttributeOptions.Any(a => a.Value.ToLower() == value.ToLower()) is false) return Result.Fail(new Error("Attribute option was not found").WithMetadata("StatusCode", 400)); 
-            }
-            return true;
-        }
+        
     }
 }

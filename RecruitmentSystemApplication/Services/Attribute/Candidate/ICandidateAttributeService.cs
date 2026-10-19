@@ -14,5 +14,6 @@ namespace RecruitmentSystemApplication.Services.Attribute.Candidate
         Task DeleteCandidateAttributes(List<Guid> candidateAttributeIds);
         Task<Result> CreateCandidateAttributeImage(Stream fileStream, string contentType, string userId, bool isAvatar
             , string attributeId);
+        Task<Result> ModifyCandidateAttributeImage(Stream fileStream, string contentType, string userId, CandidateAttributeImageDTO candidateAttributeImageDTO);
     }
 }

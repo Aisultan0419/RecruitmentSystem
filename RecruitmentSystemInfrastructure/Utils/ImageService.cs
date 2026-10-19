@@ -5,11 +5,13 @@ using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 using RecruitmentSystemApplication.Services.Profile;
 using SixLabors.ImageSharp.Processing.Processors.Transforms;
+using FluentResults;
 namespace RecruitmentSystemInfrastructure.Utils
 {
     public class ImageService(IAmazonS3 s3Client) : IImageService
     {
         private const string PublicBaseUrl = "https://pub-8d61ae007ced485d8b04d21436dec6b9.r2.dev";
+        private const string BucketName = "recruitmentsystem";
         public async Task<string> SaveImage(Stream fileStream, bool isAvatar)
         {
             using (var image = Image.Load(fileStream))
@@ -33,7 +35,7 @@ namespace RecruitmentSystemInfrastructure.Utils
 
                     var putRequest = new PutObjectRequest()
                     {
-                        BucketName = "recruitmentsystem",
+                        BucketName = BucketName,
                         Key = isAvatar ? $"avatars/{uniqueFileName}" : $"images/{uniqueFileName}",
                         InputStream = outputStream,
                         ContentType = "image/webp",
@@ -48,6 +50,31 @@ namespace RecruitmentSystemInfrastructure.Utils
                     return imageUrl;
                 }
             }
+        }
+        public async Task DeleteImage(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl)) return;
+
+            string key = ExtractKeyFromUrl(imageUrl);
+
+            if (string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+            var deleteRequest = new DeleteObjectRequest
+            {
+                BucketName = BucketName,
+                Key = key
+            };
+            await s3Client.DeleteObjectAsync(deleteRequest);
+        }
+        private static string ExtractKeyFromUrl(string imageUrl)
+        {
+            if (Uri.TryCreate(imageUrl, UriKind.Absolute, out Uri? uri))
+            {
+                return uri.AbsolutePath.TrimStart('/');
+            }
+            return string.Empty;
         }
     }
 }

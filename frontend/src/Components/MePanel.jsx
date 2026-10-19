@@ -9,6 +9,8 @@ import { VITE_API_URL } from "../config"; //user errors я еще их не сд
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogFooter} from "@/Components/ui/dialog"
 import { jwtDecode } from "jwt-decode";
 import CandidatePanel from "./CandidateAttributePanel";
+import { api } from "../api/client";
+import { toast } from "sonner";
 const MePanel = () => {
 
     const [isEditing, setIsEditing] = useState(false); 
@@ -29,59 +31,36 @@ const MePanel = () => {
     }, []);
 
     const getProfile = async () => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/profile`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                    'Content-Type': 'application/json'
-                }});
-            
-                if(!response.ok)
-                    console.error(await response.text());
-                else{
-                    const data = await response.json();
-                    console.log(data);
-                    setFirstName(data.firstName);
-                    setSecondName(data.lastName);
-                    setLocation(data.location);
-                    setAvatarUrl(data.photoUrl);
-                    setVersion(data.version);  
-                }
-            }
-        catch(ex){
-            console.error(ex);
-        }
+        const { data, error } = await api.get("/api/user/profile");
+        if (error) return;
+
+        setFirstName(data.firstName);
+        setSecondName(data.lastName);
+        setLocation(data.location);
+        setAvatarUrl(data.photoUrl);
+        setVersion(data.version);
     }
 
-    const editProfile = async(e) => {
+    const editProfile = async (e) => {
         e.preventDefault();
 
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/profile-modify`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    FirstName: firstName,
-                    LastName: secondName,
-                    Location: location,
-                    Version: version
-                })
-            });
-            if(!response.ok){
-                console.error(await response.text());
-                return;
-            }
-            setIsEditing(false);
-            getProfile();
-        }
-        catch(ex){
-            console.error(ex);
+        const toastId = toast.loading("Saving...");
+
+        const { error } = await api.put("/api/user/profile-modify", {
+            FirstName: firstName,
+            LastName: secondName,
+            Location: location,
+            Version: version
+        });
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
 
+        toast.success("Saved", { id: toastId });
+        setIsEditing(false);
+        getProfile(); 
     }
 
     function getInitials(str){
@@ -105,36 +84,22 @@ const MePanel = () => {
         }
       }
     
-    const applyAvatar = async(file) => {
+    const applyAvatar = async (file) => {
         const formData = new FormData();
         formData.append("file", file);
-        setLoading("Uploading...");
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/user/upload-avatar`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token")
-                },
-                body: formData
-            });
-            if(!response.ok){
-                console.error(await response.text()); 
-                setLoading("We could not apply your file, try again later");  //I have problems with json/text formats confusion, i need to solve it later
-                return;
-            }
-            else{
-                const imageUrl = await response.text();
-                setAvatarUrl(imageUrl);
-                getProfile();
-                setLoading("");
-                setIsDialogOpen(false);
-                console.log("Avatar is updated")
-            }
+
+        const toastId = toast.loading("Saving...");
+
+        const { data, error } = await api.post("/api/user/upload-avatar", formData);
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
-        catch(error){
-            console.error(error);
-            setLoading("We could not apply your file, try again later");
-        }
+        toast.success("Saved", { id: toastId });
+        setAvatarUrl(data);
+        getProfile();       
+        setIsDialogOpen(false);
     }
 
     return(
@@ -185,7 +150,6 @@ const MePanel = () => {
                                         )
                                     }
                                 </Dropzone>
-                                <DialogFooter className="flex flex-row border-0 justify-center items-center sm:justify-center"> {loading} </DialogFooter>
                             </DialogContent>
                         </Dialog>
                         { isEditing ? (

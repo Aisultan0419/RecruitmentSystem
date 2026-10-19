@@ -6,6 +6,8 @@ import NavigationPanel from "./Components/NavigationMenu"
 import AttributePanel from "./Components/AttributePanel"
 import { TooltipProvider } from "./Components/ui/tooltip"
 import { Routes, Route, useLocation} from 'react-router-dom';
+import PositionPanel from './Components/PositionPanel';
+import {Toaster} from "sonner";
 function App() {
 
   function defineRole(){
@@ -43,8 +45,12 @@ function App() {
 
           <Route path="/auth" element={<AuthPanel />} />
 
+          <Route path="/positions-management" element={<PositionPanel />} />
+
           <Route path="/attribute" element={<AttributePanel />}/>
         </Routes>
+
+        <Toaster position="top-center" richColors />
       </main>
 
     </div>

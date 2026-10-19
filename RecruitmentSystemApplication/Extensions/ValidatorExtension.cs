@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 using RecruitmentSystemApplication.Services.Attribute.Create;
 using RecruitmentSystemApplication.Services.Attribute.Modify;
+using RecruitmentSystemApplication.Services.Positions.Create;
 
 namespace RecruitmentSystemApplication.Extensions
 {
@@ -13,6 +14,7 @@ namespace RecruitmentSystemApplication.Extensions
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<AttributeModifyValidator>();
             services.AddValidatorsFromAssemblyContaining<AttributeCreateValidator>();
+            services.AddValidatorsFromAssemblyContaining<PositionCreateValidator>();
             return services;
         }
     }

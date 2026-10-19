@@ -12,6 +12,8 @@ import { Button } from "@/Components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/Components/ui/select"
 import deleteButtonIcon from "./assets/delete-button.svg";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader} from "@/Components/ui/dialog"
+import { api } from "../api/client";
+import { toast } from "sonner";
 const AttributePanel = () => {
     const [attributes, setAttributes] = useState([]);
     const [attributePrefix, setAttributePrefix] = useState("");
@@ -95,156 +97,90 @@ const AttributePanel = () => {
         setOptions(options.filter((_, i) => i != index));
     }
 
-    const createAttribute =  async() => {
-        try{
-            setIsLoading(true);
-            const response = await fetch(`${VITE_API_URL}/api/attribute/attribute`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': "bearer " + localStorage.getItem("token"),
-                    'Content-Type': "application/json"
-                },
-                body: JSON.stringify({
-                    Name: name,
-                    DataType: dataType,
-                    AttributeCategory: category,
-                    AttributeOptions: options
-                })
-            })
-            if(!response.ok){
-                console.error(response.error);
-            }
-            else{
-                getAttributesData();
-                resetForm();
-                setModalOpen(false);
-            }
+    const createAttribute = async () => {
+        const toastId = toast.loading("Creating attribute...");
+
+        const { error } = await api.post("/api/attribute/attribute", {
+            Name: name,
+            DataType: dataType,
+            AttributeCategory: category,
+            AttributeOptions: options
+        });
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
-        catch(ex){
-            console.error(ex);
-        }
-        finally{
-            setIsLoading(false);   
-        }
-    }
+
+        toast.success("Attribute created", { id: toastId });
+        getAttributesData();
+        resetForm();
+        setModalOpen(false);
+    };
 
     const getCategories = async () => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/attribute/categories`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': "bearer " + localStorage.getItem("token"),
-                    'Content-Type': "application/json"
-                }});
-            
-                if(!response.ok){
-                    console.error(response.error);
-                    return;
-                }
-                else{
-                    const data = await response.json();
-                    console.log(data);
-                    setCategories(data);
-                }
-        }
-        catch(ex){
-            console.error(ex);
-        }
-    }
-
+        const { data, error } = await api.get("/api/attribute/categories");
+        if (error) return;
+        
+        setCategories(data);
+    };
 
     const editAttribute = async () => {
-       try{
-           setIsLoading(true);
-           const response = await fetch(`${VITE_API_URL}/api/attribute/attribute`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': "bearer " + localStorage.getItem("token"),
-                    'Content-Type': "application/json"
-                },
-                body: JSON.stringify({
-                    Id: editingId,
-                    Name: name,
-                    DataType: dataType,
-                    Version: version,
-                    AttributeCategory: category,
-                    AttributeOptions: options
-                })
-           });
-           if(!response.ok){
-                console.error(response.error);
-           }
-           else{
-                getAttributesData();
-                resetForm();
-                setModalOpen(false);
-           }
-       }
-       catch(ex){
-        console.error(ex);
-       }
-       finally{
-            setIsLoading(false);   
+        const toastId = toast.loading("Saving changes...");
+
+        const { error } = await api.put("/api/attribute/attribute", {
+            Id: editingId,
+            Name: name,
+            DataType: dataType,
+            Version: version,
+            AttributeCategory: category,
+            AttributeOptions: options
+        });
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
         }
-    }
+
+        toast.success("Changes saved", { id: toastId });
+        getAttributesData();
+        resetForm();
+        setModalOpen(false);
+    };
 
     const deleteAttributes = async () => {
-        try{
-            const response = await fetch(`${VITE_API_URL}/api/attribute/attributes`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': "bearer " + localStorage.getItem("token"),
-                    'Content-Type': "application/json"
-                },
-                body: JSON.stringify(selectedIds)
-            });
-            if(!response.ok){
-                console.error(await response.text());
-                return;
-            }
-            else{
-                getAttributesData();
-                setSelectedIds([]);
-            }
-        }
-        catch(ex){
-            console.error(ex);
-        }
-    }
+        const toastId = toast.loading("Deleting...");
 
+        const { error } = await api.delete("/api/attribute/attributes", selectedIds);
+
+        if (error) {
+            toast.dismiss(toastId);
+            return;
+        }
+
+        toast.success("Deleted successfully", { id: toastId });
+        getAttributesData();
+        setSelectedIds([]);
+    };
 
     const getAttributesData = async () => {
-        try{
-            const params = new URLSearchParams();
-            if(attributePrefix.trim() != ""){
-                params.append("prefix", attributePrefix.trim());
-            }
-            if(filterCategory && filterCategory.trim() != ""){
-                params.append("category", filterCategory.trim());
-            }
-            params.append("page", currentPage);
-            params.append("pageSize", itemsPerPage);
-
-            const response = await fetch(`${VITE_API_URL}/api/attribute/attributes?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                    'Content-Type': 'application/json'
-                }});
-            
-            if(!response.ok)
-                console.error(await response.text());
-            else{
-                const data = await response.json();
-                console.log(data);
-                setAttributes(data.attributeResponseDTO);
-                setTotalPages(Math.ceil(data.totalItems/itemsPerPage));
-                }   
-            }
-        catch(ex){
-            console.error(ex);
+        const params = new URLSearchParams();
+        if (attributePrefix.trim() !== "") {
+            params.append("prefix", attributePrefix.trim());
         }
-    }
+        if (filterCategory && filterCategory.trim() !== "") {
+            params.append("category", filterCategory.trim());
+        }
+        params.append("page", currentPage);
+        params.append("pageSize", itemsPerPage);
+
+        const { data, error } = await api.get(`/api/attribute/attributes?${params.toString()}`);
+        
+        if (error) return;
+
+        setAttributes(data.attributeResponseDTO);
+        setTotalPages(Math.ceil(data.totalItems / itemsPerPage));
+    };
     
     return (
         <div className="flex flex-col justify-start pt-17 items-center min-h-screen">
@@ -315,7 +251,7 @@ const AttributePanel = () => {
                                      placeholder="Add option..." className="w-70"/>
                                     <Button type="button" onClick={handleAdd}>Add</Button>
                                 </div>
-                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                <div className="flex flex-wrap overflow-y-auto max-h-15 max-w-80 gap-1.5 mt-2">
                                     {options.map((option, index) => (
                                         <div key={index} className="flex items-start gap-1.5 border rounded-md text-sm px-2.5 py-1">
                                             <span>{option}</span>

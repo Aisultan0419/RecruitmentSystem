@@ -15,8 +15,8 @@ namespace RecruitmentSystemApplication.Services.Attribute.Modify
             RuleFor(a => a.DataType).DataTypeRule().When(a => a.DataType is not null);
 
             RuleFor(a => a.AttributeOptions)
-            .RequiredOptionRule(a => a.DataType)
-            .When(a => a.AttributeOptions is not null);
+                .RequiredOptionRule(a => a.DataType)
+                .When(a => a.AttributeOptions is not null);
 
             RuleFor(a => a.AttributeOptions)
                 .ForbiddenOptionRule(a => a.DataType)
