@@ -416,7 +416,7 @@ const CandidatePanel = (id) => {
                                 </Tooltip>
                             )}
                         </TableCell>
-                        <TableCell>{item.dataType != 2 ? item.value : <span onClick={() => {setPreviewUrl(item.value); setIndex(0); toggleSelectedRow(item.id)}} className="underline cursor-pointer hover:text-zinc-600">View image</span>}</TableCell>
+                        <TableCell>{item.dataType != "image" ? item.value : <span onClick={() => {setPreviewUrl(item.value); setIndex(0); toggleSelectedRow(item.id)}} className="underline cursor-pointer hover:text-zinc-600">View image</span>}</TableCell>
                         </TableRow>
                     )}
                 )}

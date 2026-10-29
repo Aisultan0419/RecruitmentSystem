@@ -67,7 +67,6 @@ const AttributePanel = () => {
 
         const targetId = selectedIds[0];
         const attribute = attributes.find(attr => attr.id === targetId);
-        console.log(attribute);
         if (attribute) {
             setEditingMode(true);
 
