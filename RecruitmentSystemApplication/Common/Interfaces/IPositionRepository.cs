@@ -1,5 +1,6 @@
 ﻿
 using FluentResults;
+using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Positions.Get;
 using RecruitmentSystemDomain.Models;
 
@@ -13,5 +14,6 @@ namespace RecruitmentSystemApplication.Common.Interfaces
         Task<PositionAccessRule?> GetAccessRule(Guid id);
         Task<Result> DeleteAttribute(Guid positionId, Guid attributeId);
         Task<Result<List<PositionAccessRule>>> GetAccessRules(Guid positionId);
+        Task<List<AttributeResponseDTO>> GetPositionAttributes(Guid positionId);
     }
 }

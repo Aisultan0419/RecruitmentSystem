@@ -2,12 +2,21 @@ using RecruitmentSystemAPI.Extensions;
 using RecruitmentSystemInfrastructure;
 using RecruitmentSystemInfrastructure.Utils;
 using RecruitmentSystemApplication.Extensions;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using RecruitmentSystemInfrastructure.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContextConnection(builder.Configuration);
 builder.Services.AddServices();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true)
+            );
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddValidators();
 builder.Services.AddSwaggerWithJwt();
 builder.Services.AddJwtAuthentication(builder.Configuration);

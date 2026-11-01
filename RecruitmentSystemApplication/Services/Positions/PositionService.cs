@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using RecruitmentSystemApplication.Common.Interfaces;
+using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Positions.Create;
 using RecruitmentSystemApplication.Services.Positions.Get;
 using RecruitmentSystemApplication.Services.Positions.Update;
@@ -130,6 +131,26 @@ namespace RecruitmentSystemApplication.Services.Positions
             return accessRules;
         } 
 
+        public async Task<Result> Publish(Guid positionId)
+        {
+            var position = await positionRepository.GetPosition(positionId);
+            if (position is null)
+                return Result.Fail($"Position with id - {positionId} was not found");
+            position.IsDraft = false;
+            await baseRepository.SaveChanges();
+            return Result.Ok();
+        }
+
+        public async Task<Result> Unpublish(Guid positionId)
+        {
+            var position = await positionRepository.GetPosition(positionId);
+            if (position is null)
+                return Result.Fail($"Position with id - {positionId} was not found");
+            position.IsDraft = true;
+            await baseRepository.SaveChanges();
+            return Result.Ok();
+        }
+
         private async Task<Result> ValidateAccessRule(AccessRuleDTO accessRuleDTO)
         {
             var position = await positionRepository.GetPosition(accessRuleDTO.PositionId);
@@ -157,6 +178,19 @@ namespace RecruitmentSystemApplication.Services.Positions
             }
             return Result.Ok();
         }
+
+        public async Task<List<AttributeResponseDTO>> GetPositionAttributes(Guid positionId)
+        {
+            var result = await positionRepository.GetPositionAttributes(positionId);
+            return result;
+        }
+
+        public async Task<Result> DeletePositions(List<Guid> positionIds)
+        {
+            await baseRepository.DeleteItems<Position>(positionIds);
+            return Result.Ok();
+        }
+
         private static readonly Dictionary<DataType, ComparisonOperator[]> Allowed = new()
         {
             [DataType.Numeric] = [
@@ -201,7 +235,7 @@ namespace RecruitmentSystemApplication.Services.Positions
                 ComparisonOperator.NotContains
            ],
             [DataType.OneOfMany] = [
-               ComparisonOperator.Equals,
+                ComparisonOperator.Equals,
                 ComparisonOperator.NotEquals
            ]
         };

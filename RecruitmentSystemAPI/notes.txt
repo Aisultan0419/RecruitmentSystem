@@ -1,5 +1,22 @@
 и фронт там мелких багов много надо исправить 11 10 2026
 атрибут валидатор два раза делает запрос на БД
+иногда загрузка зависает из-за сети, надо по времени ограничить такие моменты
 
 access rules на атрибут в позиции теперь еще надо сделать
 
+20.10.26
+доделай таблицу, поиск и так далее, еще access rules потом надо добавить
+
+public надо относительно позиции посмотреть как работают
+теги недоработаны
+
+bugs
+2 notifications when creating position
+при удалении position attribute, rules сохраняются, это неправильно
+
+
+/RecruitmentSystemAPI/PositionController.cs
+/RecruitmentSystemApplication/Services/Positions/PositionService.cs
+/RecruitmentSystemInfrastructure/Repositories/PositionRepository.cs
+/RecruitmentSystemInfrastructure/AppDbContext.cs
+/RecruitmentSystemApplication/BaseRepository.cs

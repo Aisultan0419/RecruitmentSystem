@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Positions.Get;
 using RecruitmentSystemApplication.Services.Positions.Update;
 using RecruitmentSystemDomain.Enums;
@@ -16,5 +17,9 @@ namespace RecruitmentSystemApplication.Services.Positions.Create
         Task<Result<int>> Update(PositionUpdateDTO positionUpdateDTO);
         Task<Result> Delete(Guid attributeId, Guid positionId);
         Task<Result<List<PositionAccessRule>>> GetAccessRules(Guid positionId);
+        Task<Result> DeletePositions(List<Guid> positionIds);
+        Task<List<AttributeResponseDTO>> GetPositionAttributes(Guid positionId);
+        Task<Result> Publish(Guid positionId);
+        Task<Result> Unpublish(Guid positionId);
     }
 }

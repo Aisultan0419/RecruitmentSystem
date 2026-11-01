@@ -1,7 +1,6 @@
-﻿using Amazon.Util;
-using FluentResults;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 using RecruitmentSystemAPI.Extensions;
 using RecruitmentSystemApplication.Services.Positions.Create;
 using RecruitmentSystemApplication.Services.Positions.Get;
@@ -80,6 +79,38 @@ namespace RecruitmentSystemAPI.Controllers
         public async Task<IActionResult> GetAccessRules([FromQuery] Guid positionId)
         {
             var result = await positionService.GetAccessRules(positionId);
+            return result.ToActionResult();
+        }
+
+        [Authorize(Roles = "Recruiter,Admin")]
+        [HttpGet("positionAttributes")]
+        public async Task<IActionResult> GetPositionAttributes([FromQuery] Guid positionId)
+        {
+            var result = await positionService.GetPositionAttributes(positionId);
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPut("publish")]
+        public async Task<IActionResult> Publish([FromQuery] Guid positionId)
+        {
+            var result = await positionService.Publish(positionId);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPut("unpublish")]
+        public async Task<IActionResult> Unpublish([FromQuery] Guid positionId)
+        {
+            var result = await positionService.Unpublish(positionId);
+            return result.ToActionResult();
+        }
+
+        [Authorize(Roles = "Recruiter,Admin")]
+        [HttpDelete("positions")]
+        public async Task<IActionResult> DeletePositions([FromBody] List<Guid> positionIds)
+        {
+            var result = await positionService.DeletePositions(positionIds);
             return result.ToActionResult();
         }
     }

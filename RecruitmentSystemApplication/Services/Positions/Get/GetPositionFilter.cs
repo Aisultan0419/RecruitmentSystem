@@ -2,5 +2,6 @@
 
 namespace RecruitmentSystemApplication.Services.Positions.Get
 {
-    public record GetPositionFilter(string? title, string? description, bool? isDraft, bool newestFirst = true);
+    public record GetPositionFilter(string? Title, string? Description, bool? IsDraft
+        ,int Page, int PageSize, bool NewestFirst = true);
 }
