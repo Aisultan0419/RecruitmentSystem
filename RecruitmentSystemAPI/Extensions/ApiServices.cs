@@ -11,6 +11,7 @@ using RecruitmentSystemApplication.Services.CVs.Create;
 using RecruitmentSystemApplication.Services.Positions;
 using RecruitmentSystemApplication.Services.Positions.Create;
 using RecruitmentSystemApplication.Services.Profile;
+using RecruitmentSystemApplication.Services.Tags;
 using RecruitmentSystemInfrastructure;
 using RecruitmentSystemInfrastructure.Repositories;
 using RecruitmentSystemInfrastructure.Utils;
@@ -32,11 +33,13 @@ namespace RecruitmentSystemAPI.Extensions
             services.AddScoped<IImageService, ImageService>();
             services.AddScoped<IAttributeRepository, AttributeRepository>();
             services.AddScoped<IPositionRepository, PositionRepository>();
+            services.AddScoped<ITagRepository, TagRepository>();
             services.AddScoped<IAttributeService, AttributeService>();
             services.AddScoped<ICandidateAttributeService, CandidateAttributeService>();
             services.AddScoped<ICommonMethods, CommonMethods>();
             services.AddScoped<IPositionService, PositionService>();
             services.AddScoped<ICVService, CVService>();
+            services.AddScoped<ITagService, TagService>();
             services.AddScoped<AttributeValueValidator>();
             return services;
         }
