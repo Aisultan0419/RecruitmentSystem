@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using RecruitmentSystemApplication.Services.Attribute.Create;
 using RecruitmentSystemApplication.Services.Attribute.Modify;
 using RecruitmentSystemApplication.Services.Positions.Create;
+using RecruitmentSystemApplication.Services.Tags.Create;
+using RecruitmentSystemApplication.Services.Tags.Modify;
 
 namespace RecruitmentSystemApplication.Extensions
 {
@@ -15,6 +17,8 @@ namespace RecruitmentSystemApplication.Extensions
             services.AddValidatorsFromAssemblyContaining<AttributeModifyValidator>();
             services.AddValidatorsFromAssemblyContaining<AttributeCreateValidator>();
             services.AddValidatorsFromAssemblyContaining<PositionCreateValidator>();
+            services.AddValidatorsFromAssemblyContaining<TagModifyDTO>();
+            services.AddValidatorsFromAssemblyContaining<TagCreateDTO>();
             return services;
         }
     }

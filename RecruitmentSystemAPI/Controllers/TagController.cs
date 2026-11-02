@@ -21,7 +21,7 @@ namespace RecruitmentSystemAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTags([FromQuery] string prefix)
+        public async Task<IActionResult> GetTags([FromQuery] string? prefix)
         {
             var result = await tagService.GetTags(prefix);
             return result.ToActionResult();

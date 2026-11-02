@@ -23,7 +23,7 @@ namespace RecruitmentSystemApplication.Services.Tags
             return Result.Ok(tag.Id);
         }
 
-        public async Task<Result<List<Tag>>> GetTags(string prefix)
+        public async Task<Result<List<Tag>>> GetTags(string? prefix)
         {
             var tags = await tagRepository.GetTagsByPrefix(prefix);
             return Result.Ok(tags);

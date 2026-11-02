@@ -6,12 +6,19 @@ namespace RecruitmentSystemInfrastructure.Repositories
 {
     public class TagRepository(AppDbContext dbContext) : ITagRepository
     {
-        public async Task<List<Tag>> GetTagsByPrefix(string prefix)
+        public async Task<List<Tag>> GetTagsByPrefix(string? prefix)
         {
-            return await dbContext.Tags
+            var query = dbContext.Tags.AsQueryable();
+
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                query = query.Where(tag => EF.Functions.ILike(tag.Name, $"{prefix}%"));
+            }
+
+            return await query
                 .AsNoTracking()
-                .Where(tag => EF.Functions.ILike(tag.Name, $"{prefix}%"))
                 .OrderBy(tag => tag.Name)
+                .Take(10)
                 .ToListAsync();
         }
 
