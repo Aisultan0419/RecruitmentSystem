@@ -6,6 +6,8 @@ using RecruitmentSystemApplication.Services.Attribute.Candidate;
 using RecruitmentSystemApplication.Services.Attribute.Common;
 using RecruitmentSystemApplication.Services.Auth.Login;
 using RecruitmentSystemApplication.Services.Auth.Register;
+using RecruitmentSystemApplication.Services.CVs;
+using RecruitmentSystemApplication.Services.CVs.Create;
 using RecruitmentSystemApplication.Services.Positions;
 using RecruitmentSystemApplication.Services.Positions.Create;
 using RecruitmentSystemApplication.Services.Profile;
@@ -34,6 +36,7 @@ namespace RecruitmentSystemAPI.Extensions
             services.AddScoped<ICandidateAttributeService, CandidateAttributeService>();
             services.AddScoped<ICommonMethods, CommonMethods>();
             services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<ICVService, CVService>();
             services.AddScoped<AttributeValueValidator>();
             return services;
         }

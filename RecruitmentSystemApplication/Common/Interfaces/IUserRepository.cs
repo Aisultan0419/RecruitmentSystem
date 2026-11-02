@@ -7,6 +7,7 @@ namespace RecruitmentSystemApplication.Common.Interfaces
     public interface IUserRepository
     {
         Task<User?> FindUser(string email);
+        Task<User?> FindUserById(Guid id);
         Task<UserProfile?> FindUserProfile(Guid id);
         Task<Result> UpdateProfile(string userId, UserProfileDTO userProfileDTO);
     }

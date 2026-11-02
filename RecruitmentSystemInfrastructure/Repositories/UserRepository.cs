@@ -12,6 +12,10 @@ namespace RecruitmentSystemInfrastructure.Repositories
             var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
             return user;
         }
+        public async Task<User?> FindUserById(Guid id)
+        {
+            return await _context.Users.SingleOrDefaultAsync(u => u.Id == id);
+        }
         public async Task<UserProfile?> FindUserProfile(Guid id)
         {
             var user = await _context.Users.Include(a => a.UserProfile)

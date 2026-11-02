@@ -325,6 +325,7 @@ const PositionPanel = () => {
             return;
         }
         toast.success("Attribute is deleted", {id: toastId});
+        setAttribute(null);
         setPickedAttributes(prev => prev.filter(item => item.id !== attribute.id));
     }
 
