@@ -1,6 +1,9 @@
 ﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
+using RecruitmentSystemApplication.Services.CandidateProjects.Create;
+using RecruitmentSystemApplication.Services.CandidateProjects.Modify;
+using RecruitmentSystemApplication.Services.CandidateProjects.Tags;
 using RecruitmentSystemApplication.Services.Attribute.Create;
 using RecruitmentSystemApplication.Services.Attribute.Modify;
 using RecruitmentSystemApplication.Services.Positions.Create;
@@ -19,6 +22,9 @@ namespace RecruitmentSystemApplication.Extensions
             services.AddValidatorsFromAssemblyContaining<PositionCreateValidator>();
             services.AddValidatorsFromAssemblyContaining<TagModifyDTO>();
             services.AddValidatorsFromAssemblyContaining<TagCreateDTO>();
+            services.AddValidatorsFromAssemblyContaining<CandidateProjectCreateValidator>();
+            services.AddValidatorsFromAssemblyContaining<CandidateProjectModifyValidator>();
+            services.AddValidatorsFromAssemblyContaining<CandidateProjectTagValidator>();
             return services;
         }
     }
