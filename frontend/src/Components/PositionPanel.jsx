@@ -15,6 +15,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader} from "
 import { ShieldCheck, Shield, ChevronDown, XCircle } from "lucide-react";
 import { api } from "../api/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs"
 
 function useDebounce(value, delay = 700){
     const [debouncedValue, setDebouncedValue] = useState(value)
@@ -77,6 +78,68 @@ const PositionPanel = () => {
         "Between",
     ];
     const [expandedRowId, setExpandedRowId] = useState();
+    const [positionTags, setPositionTags] = useState([]);
+    const [tag, setTag] = useState(null);
+    const [tags, setTags] = useState([]);
+    const [tagPrefix, setTagPrefix] = useState("");
+    const debouncedTagPrefix = useDebounce(tagPrefix, 500);
+
+    useEffect(() => {
+        if (isModalOpen && positionId) {
+            getPositionTags(positionId);
+        }
+    }, [isModalOpen, positionId]);
+
+    useEffect(() => {
+        if (isModalOpen) {
+            getAvailableTags();
+        }
+    }, [debouncedTagPrefix, isModalOpen]);
+
+    const getPositionTags = async (posId) => {
+        const { data, error } = await api.get(`/api/tag/position?positionId=${posId}`);
+        if (error) return;
+        setPositionTags(data);
+    };
+
+    const getAvailableTags = async () => {
+        const params = new URLSearchParams();
+        if (tagPrefix.trim() !== "") {
+            params.append("prefix", tagPrefix.trim());
+        }
+        const { data, error } = await api.get(`/api/tag?${params.toString()}`);
+        if (error) return;
+        setTags(data);
+    };
+
+    const addTagToPosition = async (selectedTag) => {
+        if (!positionId) {
+            toast.error("Please fill title and description first to create the position");
+            return;
+        }
+        const toastId = toast.loading("Saving...");
+        const { error } = await api.post(`/api/tag/position?positionId=${positionId}&tagId=${selectedTag.id}`, {});
+        if (error) {
+            toast.dismiss(toastId);
+            return;
+        }
+        toast.success("Saved", { id: toastId });
+        setTagPrefix("");
+        setTag(null);
+        getPositionTags(positionId);
+    };
+
+    const removeTagFromPosition = async (tagId) => {
+        if (!positionId) return;
+        const toastId = toast.loading("Saving...");
+        const { error } = await api.delete(`/api/tag/position?positionId=${positionId}&tagId=${tagId}`);
+        if (error) {
+            toast.dismiss(toastId);
+            return;
+        }
+        toast.success("Saved", { id: toastId });
+        getPositionTags(positionId);
+    };
 
     const toggleSelectedRow = (id) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id])
@@ -95,7 +158,7 @@ const PositionPanel = () => {
             if (accessRuleId.trim() === "") {
                 addAccessRule();
             }
-            else if(operator.trim() === "" && accessRuleValue.trim() === ""){
+            else if(operator === null && accessRuleValue.trim() === ""){
                 deleteAccessRule();
             } 
             else {
@@ -176,14 +239,14 @@ const PositionPanel = () => {
 
     const deleteAccessRule = async () => {
         const toastId = toast.loading("Saving...");
-        const {error} = await api.delete(`/api/position/delete?positionAccessRuleId=${accessRuleId}`);
+        const {error} = await api.delete(`/api/position/access-rule?positionAccessRuleId=${accessRuleId}`);
         if(error) {
             toast.dismiss(toastId);
             return;
         }
         toast.success("Saved", {id: toastId});
         setExpandedRowId();
-        getAccessRule();
+        getAccessRule(positionId);
     }
 
     const editAccessRule = async () => {
@@ -419,6 +482,10 @@ const PositionPanel = () => {
         setDescription("");
         setAccessRuleId("");
         setMaxProjectsCount(0);
+        setTagPrefix("");
+        setTag(null);
+        setTags([]);
+        setPositionTags([]);
     }
 
     const handleOpenChange = (open) => {
@@ -458,39 +525,218 @@ const PositionPanel = () => {
                                 </TooltipContent>
                             </Tooltip>
                             <DialogContent relative ref={dialogContentRef} onOpenAutoFocus={e => e.preventDefault()} onPointerDownOutside={e => e.preventDefault()} className="sm:max-w-250 h-150 w-220 flex flex-col">
-                                <DialogTitle className="flex justify-center mt-2">Create new position</DialogTitle>
-                                <div className="flex flex-row">
-                                    <div className="w-1/2 flex-none"> {/* Left column: form */}
-                                        <div className="flex flex-col justify-start  m-4">
-                                            <label className="text-small text-zinc-600 font-medium">Title</label>
-                                            <Input type="text" value={title} onChange={e => {setTitle(e.target.value); isDirtyRef.current = true;}} className="max-w-100"></Input>
-                                            <label className="text-small text-zinc-600 font-medium">Description</label>
-                                            <Input type="text" value={description} onChange={e => { setDescription (e.target.value);  isDirtyRef.current = true;}} className="max-w-100"></Input>
-                                            <label className="text-small text-zinc-600 font-medium">Maximum projects number</label>
-                                            <Input type="number" value={maxProjectsCount} onChange={e => {setMaxProjectsCount(e.target.value);  isDirtyRef.current = true;}} min={0} className="max-w-100"></Input>
+                                <Tabs defaultValue="details" className="w-full flex-1 flex flex-col">
+                                    <TabsList variant="line" className="w-full flex flex-col justify-start p-0 bg-transparent">
+                                        <div className="flex flex-row gap-40">
+                                            <TabsTrigger value="details" className="text-zinc-500 data-[state=active]:text-black transition-all cursor-pointer">Position Details</TabsTrigger>
+                                            <div className="w-px h-full bg-zinc-300 self-center" />
+                                            <TabsTrigger value="tags" className="text-zinc-500 data-[state=active]:text-black transition-all cursor-pointer">Project Tags</TabsTrigger>
                                         </div>
-                                        <div className="flex flex-col ml-4 h-full  gap-7">
-                                            <div className="flex flex-row gap-5.5">
+                                        <div className="flex flex-row gap-30">
+                                            <div className="w-70 h-px bg-zinc-300" />
+                                            <div className="w-70 h-px bg-zinc-300" />
+                                        </div>
+                                    </TabsList>
+                                    <TabsContent value="details" className="flex-1 pt-3 overflow-y-auto">
+                                        <div className="flex flex-row">
+                                            <div className="w-1/2 flex-none"> {/* Left column: form */}
+                                                <div className="flex flex-col justify-start  m-4">
+                                                    <label className="text-small text-zinc-600 font-medium">Title</label>
+                                                    <Input type="text" value={title} onChange={e => {setTitle(e.target.value); isDirtyRef.current = true;}} className="max-w-100"></Input>
+                                                    <label className="text-small text-zinc-600 font-medium">Description</label>
+                                                    <Input type="text" value={description} onChange={e => { setDescription (e.target.value);  isDirtyRef.current = true;}} className="max-w-100"></Input>
+                                                    <label className="text-small text-zinc-600 font-medium">Maximum projects number</label>
+                                                    <Input type="number" value={maxProjectsCount} onChange={e => {setMaxProjectsCount(e.target.value);  isDirtyRef.current = true;}} min={0} className="max-w-100"></Input>
+                                                </div>
+                                                <div className="flex flex-col ml-4 h-full  gap-7">
+                                                    <div className="flex flex-row gap-5.5">
+                                                        <Combobox 
+                                                            items={attributes}
+                                                            value={attribute}
+                                                            className="flex-none"
+                                                            onValueChange={(val) => {
+                                                                setAttribute(val);
+                                                                if (val) {
+                                                                    setAttributePrefix(val.name); 
+                                                                }
+                                                            }}
+                                                            itemToStringLabel={(item) => item?.name ?? ""}
+                                                            filter={null}
+                                                            >
+                                                            <ComboboxInput 
+                                                                value={attributePrefix} 
+                                                                onChange={(e) => setAttributePrefix(e.target.value)}  
+                                                                placeholder="Select an attribute" 
+                                                            />
+                                                            <ComboboxContent container={dialogContentRef.current}>
+                                                                <ComboboxEmpty>No attributes found.</ComboboxEmpty>
+                                                                <ComboboxList>
+                                                                {(item) => (
+                                                                    <ComboboxItem key={item.id} value={item}>
+                                                                    {item.name}
+                                                                    </ComboboxItem>
+                                                                )}
+                                                                </ComboboxList>
+                                                            </ComboboxContent>
+                                                        </Combobox>
+
+                                                        <Select className="flex-none" value={filterCategory} onValueChange={setFilterCategory}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Attribute category" />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="w-18">
+                                                                <SelectItem value="">All</SelectItem>
+                                                                {categories.map((category, index) => (
+                                                                    <SelectItem key={index} value={category}>{category}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex flex-col gap-5">
+
+                                                        {attribute && (
+                                                            <div className="ml-2 flex flex-col gap-2"> 
+                                                                <div>
+                                                                    <Label className="text-zinc-600 text-[13px]">Data type</Label>
+                                                                    <span className="text-[15px] font-sans">{attribute.dataType}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <Label className="text-zinc-600 text-[13px]">Attribute category</Label>
+                                                                    <span className="text-[15px] font-sans">{attribute.categoryName}</span>
+                                                                </div>
+                                                                {attribute.dataType === "OneOfMany" && (
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        <Label>Attribute options</Label>
+                                                                        {attribute.attributeOptions.map((option, index) => (
+                                                                            <div className="border p-1 rounded-md bg-zinc-100 overflow-y-auto max-h-50 border-zinc-400 ">
+                                                                                <span key={index} className="text-[15px] font-sans">{option}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                    
+                                                        <div className="mb-15 max-w-70">
+                                                            {(attribute && !expandedRowId) && <Button onClick={() => positionId === null ? console.log("position is not created") : addAttribute(attribute, positionId)}>Add</Button>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col w-1/2 flex-none items-center"> {/* Right column: attributes */}
+                                                <span className="text-base">Chosen attributes</span>
+                                                <div className="flex flex-row flex-wrap w-full min-w-0 overflow-y-auto max-h-100 mt-2">
+                                                    {pickedAttributes.length !== 0 ? (
+                                                        pickedAttributes.map((option, index) => {
+                                                            const isExpanded = expandedRowId === option.id;
+                                                            const hasRule = accessRules.some((rule) => rule.attributeDefinitionId === option.id);
+
+                                                            return (
+                                                                <div key={option.id} className="w-full border-b border-zinc-200 transition-colors bg-white rounded-md overflow-hidden">
+                                                                    {/*header row */}
+                                                                    <div className="w-full h-10 flex items-center justify-between px-2 cursor-pointer hover:bg-zinc-50 transition-colors "
+                                                                        onClick={() => expandRow(option.id)}>
+                                                                        <div className="flex items-center gap-2 truncate">
+
+                                                                            <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
+                                                                                <Shield
+                                                                                    className={`absolute w-4 h-4 text-zinc-300 transition-all duration-300 ease-out ${
+                                                                                        hasRule ? "opacity-0 scale-50 rotate-45" : "opacity-100 scale-100 rotate-0"
+                                                                                    }`}
+                                                                                />
+                                                                                <ShieldCheck
+                                                                                    className={`absolute w-4 h-4 text-green-600 transition-all duration-300 ease-out ${
+                                                                                        hasRule ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-45"
+                                                                                    }`}
+                                                                                />
+                                                                            </div>
+                                                                            <span className="font-medium text-[14px] truncate">
+                                                                                {option.name}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex items-center shrink-0">
+                                                                            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}/>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="cursor-pointer ml-1 text-zinc-400 hover:text-zinc-700 p-1"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    deleteAttribute(option, positionId);
+                                                                                }}
+                                                                                >
+                                                                                ×
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* expanded row */}
+                                                                    <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                                                                        <div className="overflow-hidden">
+                                                                            <div className="flex flex-col sm:flex-row justify-between items-end bg-zinc-50 border-t-2 border-zinc-100 p-3">
+                                                                                <div className="flex flex-col gap-2 w-full max-w-xs">
+                                                                                    <Select value={operator || ""} onValueChange={(val) => {setOperator(val); isDirtyAccessRuleRef.current = true;}}>
+                                                                                        <SelectTrigger className="bg-white w-full text-[14px]">
+                                                                                            <SelectValue placeholder="Select operator" />
+                                                                                        </SelectTrigger>
+                                                                                        <SelectContent>
+                                                                                            <SelectItem 
+                                                                                                value="" 
+                                                                                                className="text-zinc-500 font-medium cursor-pointer focus:bg-zinc-100 focus:text-zinc-800 flex items-center gap-2">
+                                                                                                <XCircle className="w-4 h-4 text-zinc-400" />
+                                                                                                <span>Clear selection</span>
+                                                                                            </SelectItem>
+                                                                                            {operators.map((op) => (
+                                                                                            <SelectItem key={op} value={op}>
+                                                                                                {op}
+                                                                                            </SelectItem>
+                                                                                            ))}
+                                                                                        </SelectContent>
+                                                                                    </Select>
+                                                                                    <Input type="text" placeholder="Value..." className="bg-white w-full " value={accessRuleValue}
+                                                                                    onChange={(e) => { setAccessRuleValue(e.target.value), isDirtyAccessRuleRef.current = true;} }
+                                                                                    />
+
+                                                                                    <Input type="text" placeholder="Second value (optional)..." className="bg-white w-full" value={secondAccessRuleValue}
+                                                                                    onChange={(e) => { setSecondAccessRuleValue(e.target.value); isDirtyAccessRuleRef.current = true;} }
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="flex justify-end w-full sm:w-auto">
+                                                                                    <Button size="sm" onClick={() => deleteAccessRule()} disabled={!hasRule} className="w-7/8 text-[12px] font-medium">Reset rule</Button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })) : (<span className="text-zinc-600 text-center mt-4"> No attributes chosen yet </span>)
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value="tags" className="flex-1 pt-3 overflow-y-auto flex flex-col gap-4 pr-4">
+                                        <div className="flex flex-col gap-4 m-4">
+                                            <div className="flex flex-row gap-4 items-center">
                                                 <Combobox 
-                                                    items={attributes}
-                                                    value={attribute}
-                                                    className="flex-none"
+                                                    items={tags}
+                                                    value={tag}
+                                                    className="flex-none w-70"
                                                     onValueChange={(val) => {
-                                                        setAttribute(val);
+                                                        setTag(val);
                                                         if (val) {
-                                                            setAttributePrefix(val.name); 
+                                                            addTagToPosition(val);
                                                         }
                                                     }}
                                                     itemToStringLabel={(item) => item?.name ?? ""}
                                                     filter={null}
                                                     >
                                                     <ComboboxInput 
-                                                        value={attributePrefix} 
-                                                        onChange={(e) => setAttributePrefix(e.target.value)}  
-                                                        placeholder="Select an attribute" 
+                                                        value={tagPrefix} 
+                                                        onChange={(e) => setTagPrefix(e.target.value)}  
+                                                        placeholder="Search tags..." 
                                                     />
                                                     <ComboboxContent container={dialogContentRef.current}>
-                                                        <ComboboxEmpty>No attributes found.</ComboboxEmpty>
+                                                        <ComboboxEmpty>No tags found.</ComboboxEmpty>
                                                         <ComboboxList>
                                                         {(item) => (
                                                             <ComboboxItem key={item.id} value={item}>
@@ -500,135 +746,19 @@ const PositionPanel = () => {
                                                         </ComboboxList>
                                                     </ComboboxContent>
                                                 </Combobox>
-
-                                                <Select className="flex-none" value={filterCategory} onValueChange={setFilterCategory}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Attribute category" />
-                                                    </SelectTrigger>
-                                                    <SelectContent className="w-18">
-                                                        <SelectItem value="">All</SelectItem>
-                                                        {categories.map((category, index) => (
-                                                            <SelectItem key={index} value={category}>{category}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
                                             </div>
-                                            <div className="flex flex-col gap-5">
 
-                                                {attribute && (
-                                                    <div className="ml-2 flex flex-col gap-2"> 
-                                                        <div>
-                                                            <Label className="text-zinc-600 text-[13px]">Data type</Label>
-                                                            <span className="text-[15px] font-sans">{attribute.dataType}</span>
-                                                        </div>
-                                                        <div>
-                                                            <Label className="text-zinc-600 text-[13px]">Attribute category</Label>
-                                                            <span className="text-[15px] font-sans">{attribute.categoryName}</span>
-                                                        </div>
-                                                        {attribute.dataType === "OneOfMany" && (
-                                                            <div className="flex flex-wrap gap-2">
-                                                                <Label>Attribute options</Label>
-                                                                {attribute.attributeOptions.map((option, index) => (
-                                                                    <div className="border p-1 rounded-md bg-zinc-100 overflow-y-auto max-h-50 border-zinc-400 ">
-                                                                        <span key={index} className="text-[15px] font-sans">{option}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                            
-                                                <div className="mb-15 max-w-70">
-                                                    {(attribute && !expandedRowId) && <Button onClick={() => positionId === null ? console.log("position is not created") : addAttribute(attribute, positionId)}>Add</Button>}
-                                                </div>
+                                            <div className="flex flex-wrap mt-4 gap-2 overflow-y-auto ">
+                                                {positionTags.map((tag, index) => (
+                                                    <div key={index} className="flex items-start gap-3 border rounded-md text-sm px-2.5 py-1">
+                                                        <span>{tag.name}</span>
+                                                        <div type="button" className="text-xs cursor-pointer hover:text-zinc-900 text-zinc-500" onClick={() => removeTagFromPosition(tag.id)}>x</div>
+                                                     </div>
+                                                ))}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-col w-1/2 flex-none items-center"> {/* Right column: attributes */}
-                                        <span className="text-base">Chosen attributes</span>
-                                        <div className="flex flex-row flex-wrap w-full min-w-0 overflow-y-auto max-h-100 mt-2">
-                                            {pickedAttributes.length !== 0 ? (
-                                                pickedAttributes.map((option, index) => {
-                                                    const isExpanded = expandedRowId === option.id;
-                                                    const hasRule = accessRules.some((rule) => rule.attributeDefinitionId === option.id);
-
-                                                    return (
-                                                        <div key={option.id} className="w-full border-b border-zinc-200 transition-colors bg-white rounded-md overflow-hidden">
-                                                            {/*header row */}
-                                                            <div className="w-full h-10 flex items-center justify-between px-2 cursor-pointer hover:bg-zinc-50 transition-colors "
-                                                                 onClick={() => expandRow(option.id)}>
-                                                                <div className="flex items-center gap-2 truncate">
-
-                                                                    <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
-                                                                        <Shield
-                                                                            className={`absolute w-4 h-4 text-zinc-300 transition-all duration-300 ease-out ${
-                                                                                hasRule ? "opacity-0 scale-50 rotate-45" : "opacity-100 scale-100 rotate-0"
-                                                                            }`}
-                                                                        />
-                                                                        <ShieldCheck
-                                                                            className={`absolute w-4 h-4 text-green-600 transition-all duration-300 ease-out ${
-                                                                                hasRule ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-45"
-                                                                            }`}
-                                                                        />
-                                                                    </div>
-                                                                    <span className="font-medium text-[14px] truncate">
-                                                                        {option.name}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center shrink-0">
-                                                                    <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}/>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="cursor-pointer ml-1 text-zinc-400 hover:text-zinc-700 p-1"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            deleteAttribute(option, positionId);
-                                                                        }}
-                                                                        >
-                                                                        ×
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                            {/* expanded row */}
-                                                            <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                                                                <div className="overflow-hidden">
-                                                                    <div className="p-3 bg-zinc-50 border-t-2 border-zinc-100 flex flex-col gap-2">
-                                                                        <Select value={operator || ""} onValueChange={(val) => {setOperator(val); isDirtyAccessRuleRef.current = true;}}>
-                                                                            <SelectTrigger className="bg-white w-full text-[14px]">
-                                                                                <SelectValue placeholder="Select operator" />
-                                                                            </SelectTrigger>
-                                                                            <SelectContent>
-                                                                                <SelectItem 
-                                                                                    value="" 
-                                                                                    className="text-zinc-500 font-medium cursor-pointer focus:bg-zinc-100 focus:text-zinc-800 flex items-center gap-2">
-                                                                                    <XCircle className="w-4 h-4 text-zinc-400" />
-                                                                                    <span>Clear selection</span>
-                                                                                </SelectItem>
-                                                                                {operators.map((op) => (
-                                                                                <SelectItem key={op} value={op}>
-                                                                                    {op}
-                                                                                </SelectItem>
-                                                                                ))}
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                        <Input type="text" placeholder="Value..." className="bg-white w-full " value={accessRuleValue}
-                                                                        onChange={(e) => { setAccessRuleValue(e.target.value), isDirtyAccessRuleRef.current = true;} }
-                                                                        />
-
-                                                                        <Input type="text" placeholder="Second value (optional)..." className="bg-white w-full" value={secondAccessRuleValue}
-                                                                        onChange={(e) => { setSecondAccessRuleValue(e.target.value); isDirtyAccessRuleRef.current = true;} }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                         </div>
-                                                    );
-                                                })) : (<span className="text-zinc-600 text-center mt-4"> No attributes chosen yet </span>)
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
+                                    </TabsContent>
+                                </Tabs>
                                 <div className="max-w-100 absolute bottom-0 mb-4 flex items-center mt-auto gap-6">
                                     <Button disabled={positionId === null} onClick={getStatus() === "Publish" ? publish : unPublish} className="w-25">{getStatus()}</Button>
                                 </div>
@@ -728,7 +858,7 @@ const PositionPanel = () => {
                                     <TooltipContent className="font-medium font-sans bg-white text-black border-2">
                                         <ul>
                                             {position.tags.map((tag, i) => (
-                                                <li key={i}>• {tag}</li>
+                                                <li key={i}>• {tag.name || tag}</li>
                                             ))}
                                         </ul>
                                     </TooltipContent>

@@ -79,6 +79,12 @@ namespace RecruitmentSystemInfrastructure.Repositories
             var position = await dbContext.Positions.FindAsync(id);
             return position;
         }
+        public async Task<Position?> GetPositionWithTags(Guid id)
+        {
+            return await dbContext.Positions
+                .Include(position => position.Tags)
+                .SingleOrDefaultAsync(position => position.Id == id);
+        }
         public async Task<PositionAccessRule?> GetAccessRule(Guid id)
         {
             var accessRule = await dbContext.PositionAccessRules.FindAsync(id);

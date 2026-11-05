@@ -27,6 +27,29 @@ namespace RecruitmentSystemAPI.Controllers
             return result.ToActionResult();
         }
 
+        [HttpGet("position")]
+        public async Task<IActionResult> GetTagsByPosition([FromQuery] Guid positionId)
+        {
+            var result = await tagService.GetTagsByPosition(positionId);
+            return result.ToActionResult();
+        }
+
+        [HttpPost("position")]
+        [Authorize(Roles = "Recruiter,Admin")]
+        public async Task<IActionResult> AddTagToPosition([FromQuery] Guid positionId, [FromQuery] Guid tagId)
+        {
+            var result = await tagService.AddTagToPosition(positionId, tagId);
+            return result.ToActionResult();
+        }
+
+        [HttpDelete("position")]
+        [Authorize(Roles = "Recruiter,Admin")]
+        public async Task<IActionResult> RemoveTagFromPosition([FromQuery] Guid positionId, [FromQuery] Guid tagId)
+        {
+            var result = await tagService.RemoveTagFromPosition(positionId, tagId);
+            return result.ToActionResult();
+        }
+
         [HttpPut]
         [Authorize(Roles = "Recruiter,Admin")]
         public async Task<IActionResult> Modify([FromBody] TagModifyDTO tagModifyDTO)

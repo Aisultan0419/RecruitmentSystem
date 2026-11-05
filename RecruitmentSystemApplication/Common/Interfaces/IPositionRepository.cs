@@ -11,6 +11,7 @@ namespace RecruitmentSystemApplication.Common.Interfaces
         Task<GetPositionsDTO> GetAll(GetPositionFilter getPositionFilter);
         Task<Result<PositionAttribute>> AddAttribute(Guid attributeId, Guid positionId);
         Task<Position?> GetPosition(Guid id);
+        Task<Position?> GetPositionWithTags(Guid id);
         Task<PositionAccessRule?> GetAccessRule(Guid id);
         Task<Result> DeleteAttribute(Guid positionId, Guid attributeId);
         Task<Result<List<PositionAccessRule>>> GetAccessRules(Guid positionId);
